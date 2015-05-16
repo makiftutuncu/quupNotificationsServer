@@ -8,6 +8,7 @@ GET     /                           controllers.Application.index
 POST    /notifications              controllers.Application.getNotifications
 POST    /mentions                   controllers.Application.getMentions
 POST    /messages                   controllers.Application.getMessages
+POST    /login                      controllers.Application.login
 POST    /logout                     controllers.Application.logout
 
 # Map static resources from the /public folder to the /assets URL path

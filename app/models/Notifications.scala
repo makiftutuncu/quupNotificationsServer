@@ -3,10 +3,9 @@ package models
 import controllers.QuupRequest
 import models.enum.NotificationTypes
 import play.api.Logger
-import play.api.Play.current
 import play.api.http.{MimeTypes, Status}
 import play.api.libs.json.{JsArray, JsValue, Json}
-import play.api.libs.ws.WS
+import play.api.libs.ws.WSResponse
 import utilities.Conf
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,17 +19,15 @@ object Notifications {
       case _                               => "followComment"
     }
 
-    WS.url(Conf.Notifications.url)
-      .withHeaders("Cookie" -> s"${Conf.cookie}=${qr.token};")
-      .withRequestTimeout(Conf.timeoutInMillis).post(
+    Request.quupUrl(Conf.Notifications.url).post(
       Map(
         Conf.Notifications.notificationTypeKey -> Seq(notificationTypeValue),
         Conf.Notifications.markAsReadKey       -> Seq(markAsRead.toString)
       )
     ) map {
-      wsResponse =>
-        val status = wsResponse.status
-        val contentType = wsResponse.header("Content-Type").getOrElse("")
+      wsResponse: WSResponse =>
+        val status: Int         = wsResponse.status
+        val contentType: String = wsResponse.header("Content-Type").getOrElse("")
 
         if (status != Status.OK) {
           Logger.error(s"Failed to get notifications with type $notificationType and markAsRead $markAsRead, quup returned invalid status $status")
