@@ -1,18 +1,14 @@
 package controllers
 
-import models.Data
+import models.{Data, QuupSession}
 import play.api.Logger
 import play.api.libs.json.JsValue
 import play.api.mvc._
-import utilities.Conf
 
 import scala.concurrent.Future
 
 case class QuupRequest(request: Request[JsValue], registrationId: String) {
-  def getCookie: String = Data.getSession(registrationId) map {
-    qs =>
-      s"${Conf.trackingCookie}=${qs.tracking}; ${Conf.sessionCookie}=${qs.session};"
-  } getOrElse ""
+  def quupSession: QuupSession = Data.getSession(registrationId).getOrElse(QuupSession("", ""))
 }
 
 object QuupAction extends Controller {

@@ -84,7 +84,7 @@ object Authentication {
   }
 
   def logout(implicit qr: QuupRequest): Future[Boolean] = {
-    Request.quupUrl(Conf.Quup.quupLogout)
+    Request.quupUrl(qr.quupSession, Conf.Quup.quupLogout)
       .withFollowRedirects(follow = false)
       .get() map {
       wsResponse: WSResponse =>

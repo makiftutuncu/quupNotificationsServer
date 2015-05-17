@@ -3,7 +3,7 @@ package models
 import play.api.libs.json.{JsValue, Json}
 
 object Data {
-  private var map: Map[String, QuupSession] = load()
+  private var map: Map[String, QuupSession] = Map.empty[String, QuupSession]
 
   def add(registrationId: String, quupSession: QuupSession): Unit = {
     map += (registrationId -> quupSession)
@@ -17,10 +17,14 @@ object Data {
 
   def contains(registrationId: String): Boolean = map.contains(registrationId)
 
-  def load(): Map[String, QuupSession] = {
+  def foreach[T](f: (String, QuupSession) => T): Unit = {
+    map.foreach(i => f(i._1, i._2))
+  }
+
+  def load(): Unit = {
     // TODO Load Json from a file
 
-    Map.empty[String, QuupSession]
+    map = Map.empty[String, QuupSession]
   }
 
   def save(): Unit = {

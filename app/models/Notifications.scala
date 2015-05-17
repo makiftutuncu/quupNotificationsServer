@@ -1,10 +1,9 @@
 package models
 
-import controllers.QuupRequest
 import models.enum.NotificationTypes
 import play.api.Logger
 import play.api.http.{MimeTypes, Status}
-import play.api.libs.json.{JsArray, JsValue, Json}
+import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
 import play.api.libs.ws.WSResponse
 import utilities.Conf
 
@@ -12,14 +11,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object Notifications {
-  def get(notificationType: NotificationTypes, markAsRead: Boolean = true)(implicit qr: QuupRequest): Future[List[Notification]] = {
+  def get(quupSession: QuupSession, notificationType: NotificationTypes, markAsRead: Boolean = true): Future[List[Notification]] = {
     val notificationTypeValue: String = notificationType match {
       case NotificationTypes.Mention       => "mention"
       case NotificationTypes.DirectMessage => "directMessage"
       case _                               => "followComment"
     }
 
-    Request.quupUrl(Conf.Notifications.url).post(
+    Request.quupUrl(quupSession, Conf.Notifications.url).post(
       Map(
         Conf.Notifications.notificationTypeKey -> Seq(notificationTypeValue),
         Conf.Notifications.markAsReadKey       -> Seq(markAsRead.toString)
@@ -52,6 +51,33 @@ object Notifications {
       case t: Throwable =>
         Logger.error(s"Failed to get notifications with type $notificationType and markAsRead $markAsRead", t)
         List.empty[Notification]
+    }
+  }
+
+  def push(): Unit = {
+    Data.foreach {
+      (registrationId: String, quupSession: QuupSession) =>
+        val allNotificationsFuture = for {
+          notifications <- get(quupSession, NotificationTypes.Comment)
+          mentions      <- get(quupSession, NotificationTypes.Mention)
+          messages      <- get(quupSession, NotificationTypes.DirectMessage)
+        } yield (notifications, mentions, messages)
+
+        allNotificationsFuture map {
+          case (notifications: List[Notification], mentions: List[Notification], messages: List[Notification]) =>
+            val data: JsObject = Json.obj(
+              "notifications" -> Json.toJson(notifications.map(_.toJson)),
+              "mentions"      -> Json.toJson(mentions.map(_.toJson)),
+              "messages"      -> Json.toJson(messages.map(_.toJson))
+            )
+
+            val json: JsObject = Json.obj(
+              Conf.GCM.registrationIdKey -> registrationId,
+              Conf.GCM.dataKey           -> data
+            )
+
+            Request.gcm.post(json)
+        }
     }
   }
 }

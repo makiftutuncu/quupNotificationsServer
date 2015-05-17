@@ -1,8 +1,6 @@
 package models
 
-import controllers.QuupRequest
 import play.api.Play.current
-import play.api.libs.json.JsValue
 import play.api.libs.ws.{WS, WSRequestHolder}
 import utilities.Conf
 
@@ -12,16 +10,15 @@ object Request {
       .withRequestTimeout(Conf.timeoutInMillis)
   }
 
-  def quupUrl(url: String)(implicit qr: QuupRequest): WSRequestHolder = {
+  def quupUrl(quupSession: QuupSession, url: String): WSRequestHolder = {
     WS.url(url)
       .withRequestTimeout(Conf.timeoutInMillis)
-      .withHeaders("Cookie" -> qr.getCookie)
+      .withHeaders("Cookie" -> quupSession.getCookie)
   }
 
-  def gcm(data: JsValue)(implicit qr: QuupRequest): WSRequestHolder = {
+  def gcm: WSRequestHolder = {
     WS.url(Conf.GCM.url)
       .withRequestTimeout(Conf.timeoutInMillis)
       .withHeaders(Conf.GCM.authorizationHeader -> Conf.GCM.apiKey)
-      .withBody(data)
   }
 }

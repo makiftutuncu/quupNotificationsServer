@@ -1,9 +1,12 @@
 package models
 
 import play.api.Logger
-import play.api.libs.json.{JsValue, JsObject, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
+import utilities.Conf
 
 case class QuupSession(tracking: String, session: String) {
+  def getCookie: String = s"${Conf.trackingCookie}=$tracking; ${Conf.sessionCookie}=$session;"
+
   def toJson: JsObject = Json.obj(
     "tracking" -> tracking,
     "session"  -> session

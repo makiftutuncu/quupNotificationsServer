@@ -1,7 +1,7 @@
 package controllers
 
 import models.enum.NotificationTypes
-import models.{QuupSession, Data, Authentication, Notifications}
+import models.{Authentication, Data, Notifications, QuupSession}
 import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.libs.json.{JsObject, JsValue, Json}
@@ -17,7 +17,7 @@ object Application extends Controller {
 
   def getNotifications: Action[JsValue] = QuupAction {
     implicit qr: QuupRequest =>
-      Notifications.get(NotificationTypes.Comment) map {
+      Notifications.get(qr.quupSession, NotificationTypes.Comment) map {
         notificationList =>
           val json: JsObject = Json.obj(
             "notifications" -> Json.toJson(notificationList.map(_.toJson))
@@ -29,7 +29,7 @@ object Application extends Controller {
 
   def getMentions: Action[JsValue] = QuupAction {
     implicit qr: QuupRequest =>
-      Notifications.get(NotificationTypes.Mention) map {
+      Notifications.get(qr.quupSession, NotificationTypes.Mention) map {
         notificationList =>
           val json: JsObject = Json.obj(
             "notifications" -> Json.toJson(notificationList.map(_.toJson))
@@ -41,7 +41,7 @@ object Application extends Controller {
 
   def getMessages: Action[JsValue] = QuupAction {
     implicit qr: QuupRequest =>
-      Notifications.get(NotificationTypes.DirectMessage) map {
+      Notifications.get(qr.quupSession, NotificationTypes.DirectMessage) map {
         notificationList =>
           val json: JsObject = Json.obj(
             "notifications" -> Json.toJson(notificationList.map(_.toJson))
