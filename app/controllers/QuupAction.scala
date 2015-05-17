@@ -1,6 +1,7 @@
 package controllers
 
 import models.Data
+import play.api.Logger
 import play.api.libs.json.JsValue
 import play.api.mvc._
 import utilities.Conf
@@ -20,8 +21,10 @@ object QuupAction extends Controller {
       val registrationIdAsOpt: Option[String] = (request.body \ "registrationId").asOpt[String]
 
       if (registrationIdAsOpt.getOrElse("").isEmpty) {
+        Logger.error("Received a quup request without registration id!")
         Future.successful(BadRequest)
       } else if (!Data.contains(registrationIdAsOpt.get)) {
+        Logger.error("Received a quup request with an unauthorized registration id!")
         Future.successful(Unauthorized)
       } else {
         val quupRequest: QuupRequest = QuupRequest(request, registrationIdAsOpt.get)

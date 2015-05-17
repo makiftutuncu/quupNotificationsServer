@@ -54,9 +54,9 @@ object Authentication {
       .withFollowRedirects(follow = false)
       .post(
         Map(
-          "UserName"    -> Seq(username),
-          "Password"    -> Seq(password),
-          "RememberMe"  -> Seq("true")
+          "UserName"   -> Seq(username),
+          "Password"   -> Seq(password),
+          "RememberMe" -> Seq("true")
         )
       ) map {
       wsResponse: WSResponse =>
