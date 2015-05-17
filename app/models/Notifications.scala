@@ -76,7 +76,13 @@ object Notifications {
               Conf.GCM.dataKey           -> data
             )
 
-            Request.gcm.post(json)
+            Request.gcm.post(json) map {
+              ws: WSResponse =>
+                val status: Int  = ws.status
+                val body: String = ws.body
+
+                Logger.info(s"Received GCM result, status $status and body $body")
+            }
         }
     }
   }
