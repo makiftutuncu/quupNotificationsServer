@@ -1,6 +1,12 @@
 package models
 
-import play.api.libs.json.{JsValue, Json}
+import java.io.{FileWriter, BufferedWriter}
+
+import play.api.Logger
+import play.api.libs.json.{JsObject, JsValue, Json}
+import utilities.Conf
+
+import scala.io.{BufferedSource, Source}
 
 object Data {
   private var map: Map[String, QuupSession] = Map.empty[String, QuupSession]
@@ -22,14 +28,47 @@ object Data {
   }
 
   def load(): Unit = {
-    // TODO Load Json from a file
+    map = try {
+      val source: BufferedSource = Source.fromFile(Conf.dataPath, "UTF-8")
+      val dataAsString: String = source.mkString
 
-    map = Map.empty[String, QuupSession]
+      source.close()
+
+      val dataAsJson: JsObject = Json.parse(dataAsString).as[JsObject]
+
+      val registrationIdToQuupSessionAsOptSeq: Seq[(String, Option[QuupSession])] = dataAsJson.fields.map {
+        case (registrationId: String, quupSessionAsJson: JsValue) =>
+          registrationId -> QuupSession.fromJson(quupSessionAsJson)
+      }
+
+      val registrationIdToQuupSessionSeq: Seq[(String, QuupSession)] = registrationIdToQuupSessionAsOptSeq collect {
+        case (registrationId: String, quupSessionAsOpt: Option[QuupSession]) =>
+          registrationId -> quupSessionAsOpt.get
+      }
+
+      registrationIdToQuupSessionSeq.toMap
+    } catch {
+      case t: Throwable =>
+        Logger.error(s"Failed to load data!", t)
+        Map.empty[String, QuupSession]
+    }
   }
 
   def save(): Unit = {
-    val data: JsValue = Json.toJson(map.map(i => i._1 -> i._2.toJson))
+    try {
+      val data: String = Json.toJson(map.map(i => i._1 -> i._2.toJson)).toString()
 
-    // TODO Save Json to a file
+      val fileWriter: FileWriter         = new FileWriter(Conf.dataPath)
+      val bufferedWriter: BufferedWriter = new BufferedWriter(fileWriter)
+
+      bufferedWriter.write(data)
+      bufferedWriter.flush()
+
+      bufferedWriter.close()
+      fileWriter.close()
+    } catch {
+      case t: Throwable =>
+        Logger.error(s"Failed to save data!", t)
+    }
   }
 }

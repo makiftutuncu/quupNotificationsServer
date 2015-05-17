@@ -17,7 +17,7 @@ object QuupNotificationsGlobal extends GlobalSettings {
     Data.load()
 
     val tickActor = Akka.system(app).actorOf(Props[TickActor], "tickActor")
-    Akka.system(app).scheduler.schedule(5.seconds, 5.minutes, tickActor, "Tick!")
+    Akka.system(app).scheduler.schedule(1.minute, 1.minute, tickActor, "Tick!")
   }
 
   override def onStop(app: Application) {

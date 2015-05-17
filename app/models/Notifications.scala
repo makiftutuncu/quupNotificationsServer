@@ -81,7 +81,7 @@ object Notifications {
                 val status: Int  = ws.status
                 val body: String = ws.body
 
-                Logger.info(s"Received GCM result, status $status and body $body")
+                Logger.info(s"Received GCM result for registration id $registrationId, status $status and body $body")
             }
         }
     }
