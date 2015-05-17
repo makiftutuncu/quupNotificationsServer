@@ -11,7 +11,7 @@ import scala.concurrent.Future
 
 object Authentication {
   def getTrackingCookie: Future[Option[String]] = {
-    Request.url(Conf.Url.quupHome).get() map {
+    Request.url(Conf.Quup.quupHome).get() map {
       wsResponse: WSResponse =>
         val status: Int = wsResponse.status
 
@@ -37,7 +37,7 @@ object Authentication {
   }
 
   def getSessionCookie(trackingCookie: String, username: String, password: String): Future[Option[String]] = {
-    Request.url(Conf.Url.quupLogin)
+    Request.url(Conf.Quup.quupLogin)
       .withHeaders(
         "Cookie"          -> s"${Conf.trackingCookie}=$trackingCookie;",
         "Host"            -> "quup.com",
@@ -84,7 +84,7 @@ object Authentication {
   }
 
   def logout(implicit qr: QuupRequest): Future[Boolean] = {
-    Request.quupUrl(Conf.Url.quupLogout)
+    Request.quupUrl(Conf.Quup.quupLogout)
       .withFollowRedirects(follow = false)
       .get() map {
       wsResponse: WSResponse =>

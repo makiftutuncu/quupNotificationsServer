@@ -1,7 +1,7 @@
 package controllers
 
 import models.enum.NotificationTypes
-import models.{Authentication, Notifications}
+import models.{QuupSession, Data, Authentication, Notifications}
 import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.libs.json.{JsObject, JsValue, Json}
@@ -53,10 +53,14 @@ object Application extends Controller {
 
   def login: Action[JsValue] = Action.async(parse.json) {
     request: Request[JsValue] =>
-      val usernameAsOpt: Option[String] = (request.body \ "username").asOpt[String]
-      val passwordAsOpt: Option[String] = (request.body \ "password").asOpt[String]
+      val registrationIdAsOpt: Option[String] = (request.body \ "registrationId").asOpt[String]
+      val usernameAsOpt: Option[String]       = (request.body \ "username").asOpt[String]
+      val passwordAsOpt: Option[String]       = (request.body \ "password").asOpt[String]
 
-      if (usernameAsOpt.getOrElse("").isEmpty) {
+      if (registrationIdAsOpt.getOrElse("").isEmpty) {
+        Logger.error(s"Failed to login, registration id is empty!")
+        Future.successful(InternalServerError)
+      } else if (usernameAsOpt.getOrElse("").isEmpty) {
         Logger.error(s"Failed to login, username is empty!")
         Future.successful(InternalServerError)
       } else if (passwordAsOpt.getOrElse("").isEmpty) {
@@ -76,7 +80,9 @@ object Application extends Controller {
                   if (sessionCookieAsOpt.isEmpty) {
                     InternalServerError
                   } else {
-                    Ok(Json.obj("tracking" -> trackingCookieAsOpt.get, "session"  -> sessionCookieAsOpt.get)).as(MimeTypes.JSON)
+                    Data.add(registrationIdAsOpt.get, QuupSession(trackingCookieAsOpt.get, sessionCookieAsOpt.get))
+
+                    Ok
                   }
               }
             }
@@ -91,6 +97,8 @@ object Application extends Controller {
           if (!successful) {
             InternalServerError
           } else {
+            Data.remove(qr.registrationId)
+
             Ok
           }
       }
