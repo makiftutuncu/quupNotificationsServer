@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object Notifications {
-  def get(quupSession: QuupSession, notificationType: NotificationTypes, markAsRead: Boolean = true): Future[List[Notification]] = {
+  def get(quupSession: QuupSession, notificationType: NotificationTypes, markAsRead: Boolean = false): Future[List[Notification]] = {
     val notificationTypeValue: String = notificationType match {
       case NotificationTypes.Mention       => "mention"
       case NotificationTypes.DirectMessage => "directMessage"
