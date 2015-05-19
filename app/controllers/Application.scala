@@ -17,7 +17,7 @@ object Application extends Controller {
 
   def getNotifications: Action[JsValue] = QuupAction {
     implicit qr: QuupRequest =>
-      Notifications.get(qr.quupSession, NotificationTypes.Comment) map {
+      Notifications.get(qr.quupSession, NotificationTypes.Comment, onlyNonRead = false) map {
         notificationList =>
           val json: JsObject = Json.obj(
             "notifications" -> Json.toJson(notificationList.map(_.toJson))
@@ -29,7 +29,7 @@ object Application extends Controller {
 
   def getMentions: Action[JsValue] = QuupAction {
     implicit qr: QuupRequest =>
-      Notifications.get(qr.quupSession, NotificationTypes.Mention) map {
+      Notifications.get(qr.quupSession, NotificationTypes.Mention, onlyNonRead = false) map {
         notificationList =>
           val json: JsObject = Json.obj(
             "notifications" -> Json.toJson(notificationList.map(_.toJson))
@@ -41,7 +41,7 @@ object Application extends Controller {
 
   def getMessages: Action[JsValue] = QuupAction {
     implicit qr: QuupRequest =>
-      Notifications.get(qr.quupSession, NotificationTypes.DirectMessage) map {
+      Notifications.get(qr.quupSession, NotificationTypes.DirectMessage, onlyNonRead = false) map {
         notificationList =>
           val json: JsObject = Json.obj(
             "notifications" -> Json.toJson(notificationList.map(_.toJson))

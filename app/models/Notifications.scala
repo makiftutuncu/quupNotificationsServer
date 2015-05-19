@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object Notifications {
-  def get(quupSession: QuupSession, notificationType: NotificationTypes, markAsRead: Boolean = false): Future[List[Notification]] = {
+  def get(quupSession: QuupSession, notificationType: NotificationTypes, onlyNonRead: Boolean = true, markAsRead: Boolean = false): Future[List[Notification]] = {
     val notificationTypeValue: String = notificationType match {
       case NotificationTypes.Mention       => "mention"
       case NotificationTypes.DirectMessage => "directMessage"
@@ -44,7 +44,7 @@ object Notifications {
             Logger.error(s"Failed to get notifications with type $notificationType and markAsRead $markAsRead, could not parse some of the notifications from json $json")
             List.empty[Notification]
           } else {
-            notificationsList
+            if (onlyNonRead) notificationsList.filterNot(_.isRead) else notificationsList
           }
         }
     } recover {
