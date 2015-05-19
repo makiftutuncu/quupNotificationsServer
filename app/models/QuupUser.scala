@@ -20,7 +20,9 @@ object QuupUser {
       val name     = (json \ "DisplayName").as[String]
       val avatar   = (json \ "AvatarUrl").as[String]
 
-      Option(QuupUser(id, username, name, avatar))
+      val finalAvatar = if (avatar.endsWith("/s")) avatar.dropRight(2) else avatar
+
+      Option(QuupUser(id, username, name, finalAvatar))
     } catch {
       case t: Throwable =>
         Logger.error(s"Failed to create quup user from json $json", t)

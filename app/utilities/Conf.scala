@@ -4,8 +4,8 @@ import scala.util.matching.Regex
 import scala.concurrent.duration._
 
 object Conf {
-  val tickInitialDelay: FiniteDuration = 1.minute
-  val tickInterval: FiniteDuration     = 1.minute
+  val tickInitialDelay: FiniteDuration = 15.seconds
+  val tickInterval: FiniteDuration     = 30.seconds
 
   val trackingCookie: String     = "_tracking"
   val trackingCookieRegex: Regex = s"""^.*\\$trackingCookie=([a-zA-Z0-9]+);.*$$""".r
