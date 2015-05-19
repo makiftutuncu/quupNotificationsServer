@@ -1,8 +1,12 @@
 package utilities
 
 import scala.util.matching.Regex
+import scala.concurrent.duration._
 
 object Conf {
+  val tickInitialDelay: FiniteDuration = 1.minute
+  val tickInterval: FiniteDuration     = 1.minute
+
   val trackingCookie: String     = "_tracking"
   val trackingCookieRegex: Regex = s"""^.*\\$trackingCookie=([a-zA-Z0-9]+);.*$$""".r
 
@@ -23,7 +27,9 @@ object Conf {
     val apiKey: String              = "SOMETHING_MORE_SECRET_THAN_VICTORIA'S"
     val url: String                 = "https://android.googleapis.com/gcm/send"
     val authorizationHeader: String = "Authorization"
-    val registrationIdKey: String   = "registration_id"
+    val authorizationKey: String    = "key"
+    val registrationIdsKey: String  = "registration_ids"
+    val collapseKey: String         = "collapse_key"
     val dataKey: String             = "data"
   }
 

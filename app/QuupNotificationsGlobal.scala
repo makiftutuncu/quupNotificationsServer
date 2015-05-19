@@ -4,7 +4,7 @@ import play.api.libs.concurrent.Akka
 import play.api.mvc.RequestHeader
 import play.api.mvc.Results._
 import play.api.{Application, GlobalSettings, Logger}
-import utilities.TickActor
+import utilities.{Conf, TickActor}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -17,7 +17,7 @@ object QuupNotificationsGlobal extends GlobalSettings {
     Data.load()
 
     val tickActor = Akka.system(app).actorOf(Props[TickActor], "tickActor")
-    Akka.system(app).scheduler.schedule(1.minute, 1.minute, tickActor, "Tick!")
+    Akka.system(app).scheduler.schedule(Conf.tickInitialDelay, Conf.tickInterval, tickActor, "Tick!")
   }
 
   override def onStop(app: Application) {
