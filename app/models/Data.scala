@@ -13,10 +13,12 @@ object Data {
 
   def add(registrationId: String, quupSession: QuupSession): Unit = {
     map += (registrationId -> quupSession)
+    save()
   }
 
   def remove(registrationId: String): Unit = {
     map -= registrationId
+    save()
   }
 
   def getSession(registrationId: String): Option[QuupSession] = map.get(registrationId)
