@@ -173,7 +173,7 @@ object Data {
       case "mentions" =>
         anorm.SQL(
           s"""
-             |SELECT lastMentionsId
+             |SELECT lastMentionId
              |FROM Data
              |WHERE registrationId = {registrationId}
        """.stripMargin
@@ -182,7 +182,7 @@ object Data {
       case "messages" =>
         anorm.SQL(
           s"""
-             |SELECT lastMessagesId
+             |SELECT lastMessageId
              |FROM Data
              |WHERE registrationId = {registrationId}
        """.stripMargin
