@@ -80,9 +80,16 @@ object Application extends Controller {
                   if (sessionCookieAsOpt.isEmpty) {
                     InternalServerError
                   } else {
-                    Data.add(registrationIdAsOpt.get, QuupSession(trackingCookieAsOpt.get, sessionCookieAsOpt.get))
+                    val successfullyAdded: Boolean = Data.add(
+                      registrationIdAsOpt.get,
+                      QuupSession(trackingCookieAsOpt.get, sessionCookieAsOpt.get)
+                    )
 
-                    Ok
+                    if (!successfullyAdded) {
+                      InternalServerError
+                    } else {
+                      Ok
+                    }
                   }
               }
             }
@@ -97,9 +104,13 @@ object Application extends Controller {
           if (!successful) {
             InternalServerError
           } else {
-            Data.remove(qr.registrationId)
+            val successfullyRemoved: Boolean = Data.remove(qr.registrationId)
 
-            Ok
+            if (!successfullyRemoved) {
+              InternalServerError
+            } else {
+              Ok
+            }
           }
       }
   }
