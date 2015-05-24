@@ -9,7 +9,7 @@ It is currently deployed to https://quupnotifications.herokuapp.com.
 
 Technical Details
 --------------
-quup Notifications Server application is developed using [Play Framework](https://www.playframework.com/) and [Scala](http://www.scala-lang.org/). There is nothing special about persistence. Data are loaded into memory from disk when server runs and written back to disk when server is shutting down. I chosed this mostly because of limitations of Heroku. - *And yes, I was a bit lazy too. :)* - The application utilizes [Akka](http://akka.io/) actors and [WS](https://www.playframework.com/documentation/2.3.x/ScalaWS) and [Google Cloud Messaging](https://developer.android.com/google/gcm/index.html) for pushing to devices.
+quup Notifications Server application is developed using [Play Framework](https://www.playframework.com/) and [Scala](http://www.scala-lang.org/). There is a simple Postgres database provided by Heroku for persistence. The application utilizes [Akka](http://akka.io/) actors and [WS](https://www.playframework.com/documentation/2.3.x/ScalaWS) and [Google Cloud Messaging](https://developer.android.com/google/gcm/index.html) for pushing to devices.
 
 Privacy
 --------------
