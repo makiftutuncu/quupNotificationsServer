@@ -35,6 +35,8 @@ object GCM {
 
       if (Data.getLastId(registrationId, key).getOrElse("") != lastNotificationId) {
         if (Data.setLastId(registrationId, key, lastNotificationId)) {
+          Logger.info(s"Pushing ${notifications.size} notifications for $key to $registrationId")
+
           val data: JsValue = Json.obj(
             key -> Json.toJson(notifications.map(_.toJson))
           )
