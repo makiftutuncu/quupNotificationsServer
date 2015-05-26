@@ -44,7 +44,20 @@ object Notifications {
             Logger.error(s"Failed to get notifications with type $notificationType and markAsRead $markAsRead, could not parse some of the notifications from json $json")
             List.empty[Notification]
           } else {
-            if (onlyNonRead) notificationsList.filterNot(_.isRead) else notificationsList
+            val almostFinalNotifications: List[Notification] = if (onlyNonRead) {
+              notificationsList.filterNot(_.isRead)
+            } else {
+              notificationsList
+            }
+
+            if (notificationTypeValue == "followComment") {
+              almostFinalNotifications filterNot {
+                n: Notification =>
+                  n.notificationType == NotificationTypes.DirectMessage || n.notificationType == NotificationTypes.Mention
+              }
+            } else {
+              almostFinalNotifications
+            }
           }
         }
     } recover {
