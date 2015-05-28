@@ -7,6 +7,7 @@ object NotificationTypes extends EnumBase[NotificationTypes] {
   case object EntryLike     extends NotificationTypes
   case object CommentLike   extends NotificationTypes
   case object Follow        extends NotificationTypes
+  case object ReShareEntry  extends NotificationTypes
   case object Mention       extends NotificationTypes
   case object DirectMessage extends NotificationTypes
 
@@ -15,6 +16,7 @@ object NotificationTypes extends EnumBase[NotificationTypes] {
     EntryLike,
     CommentLike,
     Follow,
+    ReShareEntry,
     Mention,
     DirectMessage
   )
