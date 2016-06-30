@@ -1,14 +1,15 @@
 name := """quupNotificationsServer"""
 
-version := "1.0-SNAPSHOT"
+version := "2.0"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.8"
 
 libraryDependencies ++= Seq(
   jdbc,
-  anorm,
-  ws,
-  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41"
+  cache,
+  ws
 )
+
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
