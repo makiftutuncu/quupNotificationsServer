@@ -1,6 +1,7 @@
 package com.mehmetakiftutuncu.quupnotifications.models
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
+import com.mehmetakiftutuncu.quupnotifications.models.Maybe.{Maybe, _}
 import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
 
 import scala.util.Try
@@ -9,13 +10,11 @@ import scala.util.matching.Regex
 /**
   * Created by akif on 30/06/16.
   */
-case class QuupNotification(quupId: String,
+case class QuupNotification(quupId: Option[String],
                             notificationType: NotificationType,
                             when: Long,
                             by: QuupUser,
                             others: Set[QuupUser] = Set.empty[QuupUser]) {
-  val quupUrl: String = s"""/social/entry/$quupId"""
-
   def switchByTo(quupUser: QuupUser): QuupNotification = {
     if (quupUser.userId == by.userId) {
       this
@@ -38,22 +37,22 @@ case class QuupNotification(quupId: String,
 }
 
 object QuupNotification {
-  def getQuupNotifications(json: JsValue): MaybeValue[List[QuupNotification]] = {
+  def getQuupNotifications(json: JsValue): Maybe[List[QuupNotification]] = {
     val maybeDataJson: Option[JsValue] = (json \ "Data").toOption
 
     if (maybeDataJson.isEmpty) {
-      Errors(CommonError.invalidData.reason("""Failed to parse QuupNotification list because "Data" key for is missing!""").data(json.toString()))
+      Maybe(Errors(CommonError.invalidData.reason("""Failed to parse QuupNotification list because "Data" key for is missing!""").data(json.toString())))
     } else {
       val maybeDataArray: Option[JsArray] = maybeDataJson.get.asOpt[JsArray]
 
       if (maybeDataArray.isEmpty) {
-        Errors(CommonError.invalidData.reason("""Failed to parse QuupNotification list because value of "Data" wasn't a JsArray!""").data(json.toString()))
+        Maybe(Errors(CommonError.invalidData.reason("""Failed to parse QuupNotification list because value of "Data" wasn't a JsArray!""").data(json.toString())))
       } else {
         val quupNotificationsJsonList: List[JsValue] = maybeDataArray.get.value.toList
 
         val (errors: Errors, quupNotifications: List[QuupNotification]) = quupNotificationsJsonList.foldLeft(Errors.empty -> List.empty[QuupNotification]) {
           case ((errors: Errors, quupNotifications: List[QuupNotification]), quupNotificationJson: JsValue) =>
-            val maybeQuupNotification: MaybeValue[QuupNotification] = getQuupNotification(quupNotificationJson)
+            val maybeQuupNotification: Maybe[QuupNotification] = getQuupNotification(quupNotificationJson)
 
             val newErrors: Errors                            = errors ++ maybeQuupNotification.maybeErrors.getOrElse(Errors.empty)
             val newQuupNotifications: List[QuupNotification] = maybeQuupNotification.maybeValue.map(quupNotifications :+ _).getOrElse(quupNotifications)
@@ -62,30 +61,30 @@ object QuupNotification {
         }
 
         if (errors.hasErrors) {
-          errors
+          Maybe(errors)
         } else {
-          quupNotifications
+          Maybe(quupNotifications.sortWith((qn1: QuupNotification, qn2: QuupNotification) => qn1.when > qn2.when))
         }
       }
     }
   }
 
-  private def getQuupNotification(json: JsValue): MaybeValue[QuupNotification] = {
+  private def getQuupNotification(json: JsValue): Maybe[QuupNotification] = {
     val maybeNJson: Option[JsValue] = (json \ "n").toOption
 
     if (maybeNJson.isEmpty) {
-      Errors(CommonError.invalidData.reason("""Failed to parse QuupNotification because "n" key for is missing!""").data(json.toString()))
+      Maybe(Errors(CommonError.invalidData.reason("""Failed to parse QuupNotification because "n" key for is missing!""").data(json.toString())))
     } else {
       val maybeNArray: Option[JsArray] = maybeNJson.get.asOpt[JsArray]
 
       if (maybeNArray.isEmpty) {
-        Errors(CommonError.invalidData.reason("""Failed to parse QuupNotification because value of "n" wasn't a JsArray!""").data(json.toString()))
+        Maybe(Errors(CommonError.invalidData.reason("""Failed to parse QuupNotification because value of "n" wasn't a JsArray!""").data(json.toString())))
       } else {
         val quupNotificationsJsonList: List[JsValue] = maybeNArray.get.value.reverse.toList
 
         val (errors: Errors, maybeQuupNotification: Option[QuupNotification]) = quupNotificationsJsonList.foldLeft(Errors.empty -> Option.empty[QuupNotification]) {
           case ((errors: Errors, currentQuupNotification: Option[QuupNotification]), quupNotificationJson: JsValue) =>
-            val maybeQuupNotification: MaybeValue[QuupNotification] = from(quupNotificationJson)
+            val maybeQuupNotification: Maybe[QuupNotification] = from(quupNotificationJson)
 
             val newErrors: Errors = errors ++ maybeQuupNotification.maybeErrors.getOrElse(Errors.empty)
 
@@ -103,22 +102,38 @@ object QuupNotification {
         }
 
         if (errors.hasErrors) {
-          errors
+          Maybe(errors)
         } else {
-          maybeQuupNotification.get
+          Maybe(maybeQuupNotification.get)
         }
       }
     }
   }
 
-  private def from(json: JsValue): MaybeValue[QuupNotification] = {
+  private def from(json: JsValue): Maybe[QuupNotification] = {
     try {
       val maybeQuupIdJson: Option[JsValue]      = (json \ "ei").toOption
       val maybeDescriptionJson: Option[JsValue] = (json \ "dt").toOption
       val maybeWhenJson: Option[JsValue]        = (json \ "cs").toOption
 
-      val (maybeQuupId: Option[String], quupIdErrors: Errors) = if (maybeQuupIdJson.isEmpty) {
-        None -> Errors(CommonError.invalidData.reason("""Failed to parse quupId of QuupNotification because "ei" key for is missing!""").data(json.toString()))
+      val (maybeNotificationType: Option[NotificationType], notificationTypeErrors: Errors) = if (maybeDescriptionJson.isEmpty) {
+        None -> Errors(CommonError.invalidData.reason("""Failed to parse notificationType of QuupNotification because "dt" key is missing!""").data(json.toString()))
+      } else {
+        val maybeDescription: Option[String] = maybeDescriptionJson.get.asOpt[String]
+
+        if (maybeDescription.isEmpty) {
+          None -> Errors(CommonError.invalidData.reason("""Failed to parse notificationType of QuupNotification because value of "dt" wasn't a String!""").data(maybeDescriptionJson.get.toString()))
+        } else {
+          val maybeNotificationType: Maybe[NotificationType] = NotificationTypes.from(maybeDescription.get)
+
+          maybeNotificationType.maybeValue -> maybeNotificationType.maybeErrors.getOrElse(Errors.empty)
+        }
+      }
+
+      val (quupId: Option[String], quupIdErrors: Errors) = if (maybeNotificationType.isDefined && maybeNotificationType.contains(NotificationTypes.Follow)) {
+        None -> Errors.empty
+      } else if (maybeQuupIdJson.isEmpty) {
+        None -> Errors(CommonError.invalidData.reason("""Failed to parse quupId of QuupNotification because "ei" key is missing!""").data(json.toString()))
       } else {
         val maybeQuupId: Option[String] = maybeQuupIdJson.get.asOpt[String]
 
@@ -129,22 +144,8 @@ object QuupNotification {
         }
       }
 
-      val (maybeNotificationType: Option[NotificationType], notificationTypeErrors: Errors) = if (maybeDescriptionJson.isEmpty) {
-        None -> Errors(CommonError.invalidData.reason("""Failed to parse notificationType of QuupNotification because "dt" key for is missing!""").data(json.toString()))
-      } else {
-        val maybeDescription: Option[String] = maybeDescriptionJson.get.asOpt[String]
-
-        if (maybeDescription.isEmpty) {
-          None -> Errors(CommonError.invalidData.reason("""Failed to parse notificationType of QuupNotification because value of "dt" wasn't a String!""").data(maybeDescriptionJson.get.toString()))
-        } else {
-          val maybeNotificationType: MaybeValue[NotificationType] = NotificationTypes.from(maybeDescription.get)
-
-          maybeNotificationType.maybeValue -> maybeNotificationType.maybeErrors.getOrElse(Errors.empty)
-        }
-      }
-
       val (maybeWhen: Option[Long], whenErrors: Errors) = if (maybeWhenJson.isEmpty) {
-        None -> Errors(CommonError.invalidData.reason("""Failed to parse when of QuupNotification because "cs" key for is missing!""").data(json.toString()))
+        None -> Errors(CommonError.invalidData.reason("""Failed to parse when of QuupNotification because "cs" key is missing!""").data(json.toString()))
       } else {
         val maybeWhen: Option[Long] = maybeWhenJson.get.asOpt[String] flatMap {
           whenString: String =>
@@ -158,26 +159,25 @@ object QuupNotification {
         }
       }
 
-      val maybeBy: MaybeValue[QuupUser] = QuupUser.from(json)
-      val byErrors: Errors              = maybeBy.maybeErrors.getOrElse(Errors.empty)
+      val maybeBy: Maybe[QuupUser] = QuupUser.from(json)
+      val byErrors: Errors         = maybeBy.maybeErrors.getOrElse(Errors.empty)
 
       val errors: Errors = quupIdErrors ++ notificationTypeErrors ++ whenErrors ++ byErrors
 
       if (errors.hasErrors) {
         // Something went wrong
-        errors
+        Maybe(errors)
       } else {
         // Everything was fine
-        val quupId: String                     = maybeQuupId.get
         val notificationType: NotificationType = maybeNotificationType.get
         val when: Long                         = maybeWhen.get
         val by: QuupUser                       = maybeBy.value
 
-        QuupNotification(quupId, notificationType, when, by)
+        Maybe(QuupNotification(quupId, notificationType, when, by))
       }
     } catch {
       case t: Throwable =>
-        Errors(CommonError.invalidData.reason("Failed to parse QuupNotification!").data(json.toString()))
+        Maybe(Errors(CommonError.invalidData.reason("Failed to parse QuupNotification!").data(json.toString())))
     }
   }
 }
@@ -191,19 +191,19 @@ object NotificationTypes {
   case object CommentLike extends NotificationType {override val regex: Regex = """.+yorumunu.+beğendi.*""".r}
   case object Comment     extends NotificationType {override val regex: Regex = """.+yorum.+yaptı.*""".r}
   case object Mention     extends NotificationType {override val regex: Regex = """.+senden.+bahsetti.*""".r}
-  case object Message     extends NotificationType {override val regex: Regex = """.+sana.+gönderdi.*""".r}
+  case object Message     extends NotificationType {override val regex: Regex = """.+özel.+mesaj.*""".r}
   case object Follow      extends NotificationType {override val regex: Regex = """.+takip.*""".r}
   case object Share       extends NotificationType {override val regex: Regex = """.+paylaştı.*""".r}
 
   private val types: Set[NotificationType] = Set(QuupLike, CommentLike, Comment, Mention, Message, Follow, Share)
 
-  def from(description: String): MaybeValue[NotificationType] = {
+  def from(description: String): Maybe[NotificationType] = {
     val maybeNotificationType: Option[NotificationType] = types.find(_.regex.findFirstMatchIn(description).isDefined)
 
     if (maybeNotificationType.isEmpty) {
-      Errors(CommonError.invalidData.reason("""Failed to get a NotificationType from description because it didn't match to any!""").data(description))
+      Maybe(Errors(CommonError.invalidData.reason("""Failed to get a NotificationType from description because it didn't match to any!""").data(description)))
     } else {
-      maybeNotificationType.get
+      Maybe(maybeNotificationType.get)
     }
   }
 }

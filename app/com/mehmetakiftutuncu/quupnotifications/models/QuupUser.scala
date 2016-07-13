@@ -1,6 +1,7 @@
 package com.mehmetakiftutuncu.quupnotifications.models
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
+import com.mehmetakiftutuncu.quupnotifications.models.Maybe.Maybe
 import play.api.libs.json.{JsObject, JsValue, Json}
 
 /**
@@ -24,7 +25,7 @@ case class QuupUser(userId: String,
 }
 
 object QuupUser {
-  def from(json: JsValue): MaybeValue[QuupUser] = {
+  def from(json: JsValue): Maybe[QuupUser] = {
     try {
       val maybeUserIdJson: Option[JsValue]   = (json \ "me_mi").toOption
       val maybeUserNameJson: Option[JsValue] = (json \ "me_un").toOption
@@ -70,18 +71,18 @@ object QuupUser {
 
       if (errors.hasErrors) {
         // Something went wrong
-        errors
+        Maybe(errors)
       } else {
         // Everything was fine
         val userId: String   = maybeUserId.get
         val userName: String = maybeUserName.get
         val fullName: String = maybeFullName.get
 
-        QuupUser(userId, userName, fullName)
+        Maybe(QuupUser(userId, userName, fullName))
       }
     } catch {
       case t: Throwable =>
-        Errors(CommonError.invalidData.reason("Failed to parse QuupUser!").data(json.toString()))
+        Maybe(Errors(CommonError.invalidData.reason("Failed to parse QuupUser!").data(json.toString())))
     }
   }
 }
