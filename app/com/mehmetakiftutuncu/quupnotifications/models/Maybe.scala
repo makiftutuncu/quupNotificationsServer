@@ -2,9 +2,6 @@ package com.mehmetakiftutuncu.quupnotifications.models
 
 import com.github.mehmetakiftutuncu.errors.Errors
 
-/**
-  * Created by akif on 12/07/16.
-  */
 object Maybe {
   type Maybe[V] = Either[Errors, V]
 

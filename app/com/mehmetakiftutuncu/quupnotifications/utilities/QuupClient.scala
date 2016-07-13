@@ -11,10 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
-/**
-  * Created by akif on 12/07/16.
-  */
-case class QuupClient(private val wsClient: WSClient) {
+case class QuupClient(private val wsClient: WSClient) extends Loggable {
   def login(username: String, password: String): Future[Maybe[String]] = {
     val body: Map[String, Seq[String]] = Map(
       Conf.Login.usernameKey -> Seq(username),
@@ -26,26 +23,36 @@ case class QuupClient(private val wsClient: WSClient) {
                                      .withFollowRedirects(follow = false)
                                      .withBody(body)
 
+    Log.debug(s"""Logging user "$username" in...""")
+
     request.post(body).map {
       wsResponse: WSResponse =>
         val status: Int = wsResponse.status
 
         if (status != Status.FOUND) {
-          Maybe(Errors(CommonError.requestFailed.reason("""quup returned invalid status!""").data(status.toString)))
+          val errors: Errors = Errors(CommonError.requestFailed.reason("quup returned invalid status!").data(status.toString))
+          Log.error("Login failed!", errors)
+
+          Maybe(errors)
         } else {
           QuupSession.getSessionFrom(wsResponse)
         }
     }.recover {
       case t: Throwable =>
-        Maybe(Errors(CommonError.requestFailed))
+        val errors: Errors = Errors(CommonError.requestFailed)
+        Log.error("Login Future failed!", errors, t)
+
+        Maybe(errors)
     }
   }
 
-  def getNotifications(session: QuupSession): Future[Maybe[List[QuupNotification]]] = {
+  def getNotifications(quupSession: QuupSession): Future[Maybe[List[QuupNotification]]] = {
     val request: WSRequest = wsClient.url(Conf.Url.notifications())
                                      .withRequestTimeout(Conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
-                                     .withHeaders(HeaderNames.COOKIE -> session.toCookie, HeaderNames.ACCEPT -> ContentTypes.JSON)
+                                     .withHeaders(HeaderNames.COOKIE -> quupSession.toCookie, HeaderNames.ACCEPT -> ContentTypes.JSON)
+
+    Log.debug(s"""Getting notifications for registration "${quupSession.registration}"...""")
 
     request.get().map {
       wsResponse: WSResponse =>
@@ -53,42 +60,62 @@ case class QuupClient(private val wsClient: WSClient) {
         val contentType: String = wsResponse.header(HeaderNames.CONTENT_TYPE).getOrElse("")
 
         if (status != Status.OK) {
-          Maybe(Errors(CommonError.requestFailed.reason("""quup returned invalid status!""").data(status.toString)))
+          val errors: Errors = Errors(CommonError.requestFailed.reason("quup returned invalid status!").data(status.toString))
+          Log.error("Getting notifications failed!", errors)
+
+          Maybe(errors)
         } else if (!contentType.contains(ContentTypes.JSON)) {
-          Maybe(Errors(CommonError.requestFailed.reason("""quup returned invalid "Content-Type"!""").data(contentType)))
+          val errors: Errors = Errors(CommonError.requestFailed.reason("""quup returned invalid "Content-Type"!""").data(contentType))
+          Log.error("Getting notifications failed!", errors)
+
+          Maybe(errors)
         } else {
           val maybeNotificationsJson: Try[JsValue] = Try(wsResponse.json)
 
           if (maybeNotificationsJson.isFailure) {
-            Maybe(Errors(CommonError.requestFailed.reason("""quup returned invalid body!""").data(wsResponse.body)))
+            val errors: Errors = Errors(CommonError.requestFailed.reason("quup returned invalid body!").data(wsResponse.body))
+            Log.error("Getting notifications failed!", errors)
+
+            Maybe(errors)
           } else {
-            QuupNotification.getQuupNotifications(maybeNotificationsJson.get)
+            QuupNotification.getQuupNotificationList(maybeNotificationsJson.get)
           }
         }
     }.recover {
       case t: Throwable =>
-        Maybe(Errors(CommonError.requestFailed))
+        val errors: Errors = Errors(CommonError.requestFailed)
+        Log.error("Getting notifications Future failed!", errors, t)
+
+        Maybe(errors)
     }
   }
 
-  def logout(session: QuupSession): Future[Errors] = {
+  def logout(quupSession: QuupSession): Future[Errors] = {
     val request: WSRequest = wsClient.url(Conf.Url.logout)
                                      .withRequestTimeout(Conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
-                                     .withHeaders(HeaderNames.COOKIE -> session.toCookie)
+                                     .withHeaders(HeaderNames.COOKIE -> quupSession.toCookie)
+
+    Log.debug(s"""Logging registration "${quupSession.registration}" out...""")
 
     request.get().map {
       wsResponse: WSResponse =>
         val status: Int = wsResponse.status
 
         if (status != Status.FOUND) {
-          Errors(CommonError.requestFailed.reason("""quup returned invalid status!""").data(status.toString))
+          val errors: Errors = Errors(CommonError.requestFailed.reason("quup returned invalid status!").data(status.toString))
+          Log.error("Logout failed!", errors)
+
+          errors
         } else {
           Errors.empty
         }
     }.recover {
       case t: Throwable =>
-        Errors(CommonError.requestFailed)
+        val errors: Errors = Errors(CommonError.requestFailed)
+        Log.error("Logout Future failed!", errors, t)
+
+        errors
     }
   }
 }

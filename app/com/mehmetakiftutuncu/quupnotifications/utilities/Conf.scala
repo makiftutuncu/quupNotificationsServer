@@ -4,9 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import scala.concurrent.duration.FiniteDuration
 
-/**
-  * Created by akif on 12/07/16.
-  */
 object Conf {
   object Common {
     val wsTimeout: FiniteDuration = FiniteDuration(15, TimeUnit.SECONDS)
