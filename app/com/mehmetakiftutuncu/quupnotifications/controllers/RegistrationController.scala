@@ -4,12 +4,12 @@ import javax.inject.Inject
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.mehmetakiftutuncu.quupnotifications.models.Maybe._
-import com.mehmetakiftutuncu.quupnotifications.models.{Maybe, Notification, Registration}
+import com.mehmetakiftutuncu.quupnotifications.models.{Maybe, Registration}
 import com.mehmetakiftutuncu.quupnotifications.notifications.{NotificationActorSystem, NotificationCheckerActor}
 import com.mehmetakiftutuncu.quupnotifications.utilities._
 import play.api.Environment
 import play.api.db.DBApi
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.JsValue
 import play.api.libs.ws.WSClient
 import play.api.mvc.{Action, AnyContent, Request}
 
@@ -95,22 +95,6 @@ class RegistrationController @Inject()(dBApi: DBApi,
               Future.successful(Ok)
             }
           }
-        }
-    }
-  }
-
-  def test(sessionId: String) = {
-    Action.async {
-      implicit request: Request[AnyContent] =>
-        val registration: Registration = Registration("test", sessionId, 0)
-
-        quupClient.getNotifications(registration).map {
-          maybeNotifications: Maybe[List[Notification]] =>
-            if (maybeNotifications.hasErrors) {
-              failWithErrors("Failed to test!", maybeNotifications.errors)
-            } else {
-              success(Json.toJson(maybeNotifications.value.map(_.toJson)))
-            }
         }
     }
   }

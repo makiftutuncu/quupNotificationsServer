@@ -6,4 +6,3 @@ GET     /favicon.ico                com.mehmetakiftutuncu.quupnotifications.appl
 
 POST    /login                      com.mehmetakiftutuncu.quupnotifications.controllers.RegistrationController.login
 POST    /logout/:registrationId     com.mehmetakiftutuncu.quupnotifications.controllers.RegistrationController.logout(registrationId)
-GET     /test/:sessionId            com.mehmetakiftutuncu.quupnotifications.controllers.RegistrationController.test(sessionId)
