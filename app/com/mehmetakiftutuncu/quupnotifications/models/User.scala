@@ -5,10 +5,10 @@ import com.mehmetakiftutuncu.quupnotifications.models.Maybe.Maybe
 import com.mehmetakiftutuncu.quupnotifications.utilities.{Log, Loggable}
 import play.api.libs.json.{JsObject, JsValue, Json}
 
-case class QuupUser(userId: String, userName: String, fullName: String) {
+case class User(id: String, userName: String, fullName: String) {
   def toJson: JsObject = {
     Json.obj(
-      "userId"   -> userId,
+      "id"       -> id,
       "userName" -> userName,
       "fullName" -> fullName
     )
@@ -17,23 +17,23 @@ case class QuupUser(userId: String, userName: String, fullName: String) {
   override def toString: String = toJson.toString()
 }
 
-object QuupUser extends Loggable {
-  def from(json: JsValue): Maybe[QuupUser] = {
+object User extends Loggable {
+  def from(json: JsValue): Maybe[User] = {
     try {
-      val maybeUserIdJson: Option[JsValue]   = (json \ "me_mi").toOption
+      val maybeIdJson: Option[JsValue]       = (json \ "me_mi").toOption
       val maybeUserNameJson: Option[JsValue] = (json \ "me_un").toOption
       val maybeFullNameJson: Option[JsValue] = (json \ "me_dn").toOption
 
-      val (maybeUserId: Option[String], userIdErrors: Errors) = {
-        if (maybeUserIdJson.isEmpty) {
+      val (maybeId: Option[String], idErrors: Errors) = {
+        if (maybeIdJson.isEmpty) {
           None -> Errors(CommonError.invalidData.reason(""""me_mi" key is missing!""").data(json.toString()))
         } else {
-          val maybeUserId: Option[String] = maybeUserIdJson.get.asOpt[String]
+          val maybeId: Option[String] = maybeIdJson.get.asOpt[String]
 
-          if (maybeUserId.isEmpty) {
-            None -> Errors(CommonError.invalidData.reason(""""me_mi" wasn't a String!""").data(maybeUserIdJson.get.toString()))
+          if (maybeId.isEmpty) {
+            None -> Errors(CommonError.invalidData.reason(""""me_mi" wasn't a String!""").data(maybeIdJson.get.toString()))
           } else {
-            maybeUserId -> Errors.empty
+            maybeId -> Errors.empty
           }
         }
       }
@@ -66,23 +66,23 @@ object QuupUser extends Loggable {
         }
       }
 
-      val errors: Errors = userIdErrors ++ userNameErrors ++ fullNameErrors
+      val errors: Errors = idErrors ++ userNameErrors ++ fullNameErrors
 
       if (errors.hasErrors) {
-        Log.error("Failed to parse QuupUser!", errors)
+        Log.error("Failed to parse User!", errors)
 
         Maybe(errors)
       } else {
-        val userId: String   = maybeUserId.get
+        val id: String       = maybeId.get
         val userName: String = maybeUserName.get
         val fullName: String = maybeFullName.get
 
-        Maybe(QuupUser(userId, userName, fullName))
+        Maybe(User(id, userName, fullName))
       }
     } catch {
       case t: Throwable =>
         val errors: Errors = Errors(CommonError.invalidData.data(json.toString()))
-        Log.error("Failed to parse QuupUser with exception!", errors, t)
+        Log.error("Failed to parse User with exception!", errors, t)
 
         Maybe(errors)
     }

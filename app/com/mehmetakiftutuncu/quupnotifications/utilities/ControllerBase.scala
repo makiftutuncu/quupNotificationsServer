@@ -43,6 +43,7 @@ trait ControllerBase extends Controller with Loggable {
 
   protected def failWithErrors(message: => String, errors: Errors): Result = {
     Log.error(message, errors)
+
     failWithErrors(errors)
   }
 
@@ -52,6 +53,7 @@ trait ControllerBase extends Controller with Loggable {
 
   protected def futureFailWithErrors(message: => String, errors: Errors): Future[Result] = {
     Log.error(message, errors)
+
     futureFailWithErrors(errors)
   }
 }

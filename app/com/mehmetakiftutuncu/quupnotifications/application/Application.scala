@@ -1,4 +1,4 @@
-package com.mehmetakiftutuncu.quupnotifications.controllers
+package com.mehmetakiftutuncu.quupnotifications.application
 
 import play.api.mvc.{Action, AnyContent, Controller}
 
@@ -8,4 +8,6 @@ class Application extends Controller {
       Ok("quup Notifications Server is up and running!")
     }
   }
+
+  def favicon: Action[AnyContent] = Action(Ok)
 }

@@ -1,7 +1,9 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
-GET     /                           com.mehmetakiftutuncu.quupnotifications.controllers.Application.index
-POST    /login                      com.mehmetakiftutuncu.quupnotifications.controllers.QuupSessionController.login
-POST    /logout/:registration       com.mehmetakiftutuncu.quupnotifications.controllers.QuupSessionController.logout(registration)
-GET     /test/:session              com.mehmetakiftutuncu.quupnotifications.controllers.QuupSessionController.test(session)
+GET     /                           com.mehmetakiftutuncu.quupnotifications.application.Application.index
+GET     /favicon.ico                com.mehmetakiftutuncu.quupnotifications.application.Application.favicon
+
+POST    /login                      com.mehmetakiftutuncu.quupnotifications.controllers.RegistrationController.login
+POST    /logout/:registrationId     com.mehmetakiftutuncu.quupnotifications.controllers.RegistrationController.logout(registrationId)
+GET     /test/:sessionId            com.mehmetakiftutuncu.quupnotifications.controllers.RegistrationController.test(sessionId)

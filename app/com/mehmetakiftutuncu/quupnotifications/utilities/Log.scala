@@ -32,5 +32,5 @@ trait Loggable {
   self: Any =>
     implicit lazy val loggable: Loggable = self
 
-    lazy val TAG: String = self.getClass.getSimpleName
+    lazy val TAG: String = self.getClass.getSimpleName.replaceAll("\\$", "")
 }
