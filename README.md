@@ -3,7 +3,7 @@ quup Notifications Server
 
 Welcome to quup Notifications Server!
 
-This is a server application for regularly checking notifications on https://quup.com and pushing them to registered clients. There is an Android client implemented here https://github.com/mehmetakiftutuncu/quupNotificationsAndroid.
+This is a server application for regularly checking notifications on https://quup.com and pushing them to registered clients. There is an Android client implemented here https://gitlab.com/makiftutuncu/quupNotificationsAndroid.
 
 It is currently deployed to https://quupnotifications.herokuapp.com.
 
