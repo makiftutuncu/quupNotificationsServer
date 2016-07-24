@@ -3,6 +3,7 @@
 # ~~~~
 GET     /                           com.mehmetakiftutuncu.quupnotifications.application.Application.index
 GET     /favicon.ico                com.mehmetakiftutuncu.quupnotifications.application.Application.favicon
+GET     /robots.txt                 com.mehmetakiftutuncu.quupnotifications.application.Application.robots
 
 POST    /login                      com.mehmetakiftutuncu.quupnotifications.controllers.RegistrationController.login
 POST    /logout/:registrationId     com.mehmetakiftutuncu.quupnotifications.controllers.RegistrationController.logout(registrationId)

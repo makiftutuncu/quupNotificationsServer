@@ -10,4 +10,6 @@ class Application extends Controller {
   }
 
   def favicon: Action[AnyContent] = Action(Ok)
+
+  def robots: Action[AnyContent] = Action(Ok)
 }

@@ -1,8 +1,7 @@
 package com.mehmetakiftutuncu.quupnotifications.application
 
-import javax.inject.{Inject, Provider, Singleton}
-
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
+import com.google.inject.{Inject, Provider, Singleton}
 import com.mehmetakiftutuncu.quupnotifications.utilities.{ControllerBase, Log, Loggable}
 import play.api.http.DefaultHttpErrorHandler
 import play.api.mvc.{RequestHeader, Result}

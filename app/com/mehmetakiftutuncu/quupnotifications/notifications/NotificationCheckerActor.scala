@@ -1,30 +1,24 @@
 package com.mehmetakiftutuncu.quupnotifications.notifications
 
-import java.util.concurrent.TimeUnit
-
-import akka.actor._
+import akka.actor.Actor
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
+import com.google.inject.{ImplementedBy, Inject}
 import com.mehmetakiftutuncu.quupnotifications.models.Maybe.{Maybe, _}
 import com.mehmetakiftutuncu.quupnotifications.models.{Notification, Registration}
-import com.mehmetakiftutuncu.quupnotifications.notifications.NotificationCheckerActor.CheckNotifications
-import com.mehmetakiftutuncu.quupnotifications.notifications.NotificationPusherActor.PushNotifications
 import com.mehmetakiftutuncu.quupnotifications.utilities._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.Future
 
-class NotificationCheckerActor(private val conf: Conf,
-                               private val database: Database,
-                               private val gcmClient: GCMClient,
-                               private val quupClient: QuupClient,
-                               private val registrationId: String) extends Actor with Loggable {
-  private var cancellable: Option[Cancellable] = None
+case class NotificationCheckerActor @Inject() (database: DatabaseBase,
+                                               fcmClient: FCMClientBase,
+                                               quupClient: QuupClientBase) extends NotificationCheckerActorBase
 
-  override def preStart(): Unit = {
-    Log.debug(s"""Scheduling actor for registration id "$registrationId"...""")
-
-    cancellable = Option(context.system.scheduler.scheduleOnce(conf.Notifications.interval, self, CheckNotifications))
-  }
+@ImplementedBy(classOf[NotificationCheckerActor])
+trait NotificationCheckerActorBase extends Actor with Loggable {
+  protected val database: DatabaseBase
+  protected val fcmClient: FCMClientBase
+  protected val quupClient: QuupClientBase
 
   override def receive: Receive = {
     case NotificationCheckerActor.CheckNotifications =>
@@ -35,49 +29,55 @@ class NotificationCheckerActor(private val conf: Conf,
   }
 
 
-  override def postStop(): Unit = {
-    Log.debug(s"""Cancelling actor for registration id "$registrationId"...""")
-
-    cancellable.foreach(_.cancel())
-    cancellable = None
-  }
-
   def checkNotifications(): Unit = {
-    Log.debug(s"""Checking notifications for registration id "$registrationId"...""")
+    val maybeRegistrations: Maybe[List[Registration]] = Registration.getRegistrations(database)
 
-    val maybeRegistration: Maybe[Registration] = Registration.getRegistration(database, registrationId)
+    if (maybeRegistrations.hasValue) {
+      val registrations: List[Registration] = maybeRegistrations.value
 
-    if (maybeRegistration.hasValue) {
-      val registration: Registration = maybeRegistration.value
+      val resultingErrorsFutureList: List[Future[Errors]] = registrations.map {
+        registration: Registration =>
+          Log.debug(s"""Checking notifications for registration id "${registration.registrationId}"...""")
 
-      quupClient.getNotifications(registration).map {
-        maybeNotificationList: Maybe[List[Notification]] =>
-          if (maybeNotificationList.hasValue) {
-            val notifications: List[Notification] = maybeNotificationList.value.filter(_.when > registration.lastNotification)
+          quupClient.getNotifications(registration).flatMap {
+            maybeNotificationList: Maybe[List[Notification]] =>
+              if (maybeNotificationList.hasValue) {
+                val notifications: List[Notification] = maybeNotificationList.value.filter(_.when > registration.lastNotification)
 
-            NotificationPusherActor.create(context, conf, database, gcmClient, registration) ! PushNotifications(notifications)
+                if (notifications.nonEmpty) {
+                  fcmClient.push(registration, notifications).map {
+                    pushErrors: Errors =>
+                      if (pushErrors.isEmpty) {
+                        Log.warn(s"""Pushed ${notifications.size} notifications to registration id "${registration.registrationId}"!""")
+
+                        Registration.saveRegistration(database, registration.copy(lastNotification = notifications.head.when))
+                      } else {
+                        Errors.empty
+                      }
+                  }
+                } else {
+                  Future.successful(Errors.empty)
+                }
+              } else {
+                Future.successful(maybeNotificationList.errors)
+              }
+          }.recover {
+            case t: Throwable =>
+              Log.error(s"""Failed to check notifications for registration id "${registration.registrationId}" with exception!""", t)
+              Errors(CommonError.requestFailed)
           }
-      }.recover {
-        case t: Throwable =>
-          Log.error("Failed to check notifications with exception!", t)
+      }
+
+      Future.sequence(resultingErrorsFutureList).map {
+        resultingErrorsList: List[Errors] =>
+          Log.debug(s"""Checking notifications completed for "${resultingErrorsList.size}" registrations, "${resultingErrorsList.count(_.isEmpty)}" of them succeeded, "${resultingErrorsList.count(_.hasErrors)}" of them failed.""")
       }
     }
   }
 }
 
 object NotificationCheckerActor extends Loggable {
-  def name(registrationId: String): String = s"$registrationId-checker"
-
-  def create(factory: ActorRefFactory, conf: Conf, database: Database, gcmClient: GCMClient, quupClient: QuupClient, registrationId: String): ActorRef = {
-    factory.actorOf(Props[NotificationCheckerActor](new NotificationCheckerActor(conf, database, gcmClient, quupClient, registrationId)), name(registrationId))
-  }
-
-  def cancel(system: ActorSystem, registrationId: String): Unit = {
-    system.actorSelection(name(registrationId)).resolveOne(FiniteDuration(1, TimeUnit.SECONDS)).map {
-      actor: ActorRef =>
-        system.stop(actor)
-    }
-  }
+  val actorName: String = "notification-checker-actor"
 
   case object CheckNotifications
 }

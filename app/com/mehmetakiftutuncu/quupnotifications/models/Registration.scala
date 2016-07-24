@@ -5,7 +5,7 @@ import java.sql.Connection
 import anorm.{Row, SimpleSql}
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.mehmetakiftutuncu.quupnotifications.models.Maybe.Maybe
-import com.mehmetakiftutuncu.quupnotifications.utilities.{Conf, Database, Log, Loggable}
+import com.mehmetakiftutuncu.quupnotifications.utilities._
 import play.api.http.HeaderNames
 import play.api.libs.json.{JsObject, Json}
 import play.api.libs.ws.WSResponse
@@ -14,7 +14,7 @@ import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 
 case class Registration(registrationId: String, sessionId: String, lastNotification: Long) {
-  def toCookie(conf: Conf): String = s"${conf.Login.sessionKey}=$sessionId"
+  def toCookie(conf: ConfBase): String = s"${conf.Login.sessionKey}=$sessionId"
 
   def toJson: JsObject = Json.obj("registrationId" -> registrationId, "sessionId" -> sessionId, "lastNotification" -> lastNotification)
 
@@ -22,9 +22,50 @@ case class Registration(registrationId: String, sessionId: String, lastNotificat
 }
 
 object Registration extends Loggable {
-  private def extractSessionIdFromSetCookieRegex(conf: Conf): Regex = s"""^.*(${conf.Login.sessionKey.replaceAll("""\.""", """\\.""")})\\s*?=\\s*?([0-9A-Z]+);.*$$""".r
+  private def extractSessionIdFromSetCookieRegex(conf: ConfBase): Regex = s"""^.*(${conf.Login.sessionKey.replaceAll("""\.""", """\\.""")})\\s*?=\\s*?([0-9A-Z]+);.*$$""".r
 
-  def getRegistration(database: Database, registrationId: String): Maybe[Registration] = {
+  def getRegistrations(database: DatabaseBase): Maybe[List[Registration]] = {
+    try {
+      Log.debug(s"""Getting Registrations...""")
+
+      database.withConnection {
+        implicit connection: Connection =>
+          val sql: SimpleSql[Row] = anorm.SQL("""SELECT * FROM Registration""")
+
+          val throwablesOrRows: Either[List[Throwable], List[Row]] = sql.executeQuery().fold(List.empty[Row])(_ :+ _)
+
+          if (throwablesOrRows.isLeft) {
+            val errors: Errors = Errors(CommonError.database.reason("Failed to collect rows!"))
+
+            Log.error("Failed to get Registrations!", errors)
+
+            Maybe(errors)
+          } else {
+            val rows: List[Row] = throwablesOrRows.right.get
+
+            val registrations: List[Registration] = rows.map {
+              row: Row =>
+                val registrationId: String = row[String]("registrationId")
+                val sessionId: String      = row[String]("sessionId")
+                val lastNotification: Long = row[Long]("lastNotification")
+
+                Registration(registrationId, sessionId, lastNotification)
+            }
+
+            Maybe(registrations)
+          }
+      }
+    } catch {
+      case t: Throwable =>
+        val errors: Errors = Errors(CommonError.database)
+
+        Log.error("Failed to get Registrations with exception!", errors, t)
+
+        Maybe(errors)
+    }
+  }
+
+  def getRegistration(database: DatabaseBase, registrationId: String): Maybe[Registration] = {
     try {
       Log.debug(s"""Getting Registration for registration id "$registrationId"...""")
 
@@ -68,7 +109,7 @@ object Registration extends Loggable {
     }
   }
 
-  def saveRegistration(database: Database, registration: Registration): Errors = {
+  def saveRegistration(database: DatabaseBase, registration: Registration): Errors = {
     try {
       Log.debug(s"""Saving Registration for registration id "${registration.registrationId}"...""")
 
@@ -107,7 +148,7 @@ object Registration extends Loggable {
     }
   }
 
-  def deleteRegistration(database: Database, registration: Registration): Errors = {
+  def deleteRegistration(database: DatabaseBase, registration: Registration): Errors = {
     try {
       Log.debug(s"""Deleting Registration for registration id "${registration.registrationId}"...""")
 
@@ -137,7 +178,7 @@ object Registration extends Loggable {
     }
   }
 
-  def getSessionIdFrom(conf: Conf, wsResponse: WSResponse): Maybe[String] = {
+  def getSessionIdFrom(conf: ConfBase, wsResponse: WSResponse): Maybe[String] = {
     val maybeSetCookieHeader: Option[String] = wsResponse.header(HeaderNames.SET_COOKIE)
 
     if (maybeSetCookieHeader.isEmpty) {

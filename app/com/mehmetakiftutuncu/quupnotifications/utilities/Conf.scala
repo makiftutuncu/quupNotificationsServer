@@ -2,11 +2,18 @@ package com.mehmetakiftutuncu.quupnotifications.utilities
 
 import java.util.concurrent.TimeUnit
 
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.{Configuration, Environment}
 
 import scala.concurrent.duration.FiniteDuration
 
-case class Conf(private val environment: Environment) {
+@Singleton
+case class Conf @Inject() (environment: Environment) extends ConfBase
+
+@ImplementedBy(classOf[Conf])
+trait ConfBase {
+  protected val environment: Environment
+
   private lazy val conf: Configuration = Configuration.load(environment)
 
   def getFiniteDuration(key: String, defaultValue: FiniteDuration): FiniteDuration = conf.getMilliseconds(key).map(FiniteDuration(_, TimeUnit.MILLISECONDS)).getOrElse(defaultValue)
@@ -17,11 +24,11 @@ case class Conf(private val environment: Environment) {
   }
 
   object Url {
-    private val markAsReadFlagName: String                 = getString("qns.url.markAsReadFlagName", "notUnRead")
+    private val leaveAsUnreadFlagName: String = getString("qns.url.leaveAsUnreadFlagName", "notUnRead")
 
-    val login: String                                      = getString("qns.url.login",         s"https://quup.com/member/logon")
-    def notifications(markAsRead: Boolean = false): String = getString("qns.url.notifications", s"https://quup.com/social/notification${if (markAsRead) s"?$markAsReadFlagName=true" else ""}")
-    val logout: String                                     = getString("qns.url.logout",        s"https://quup.com/social/member/me/logoff")
+    val login: String                                        = getString("qns.url.login",         s"https://quup.com/member/logon")
+    def notifications(leaveAsUnread: Boolean = true): String = getString("qns.url.notifications", s"https://quup.com/social/notification${if (leaveAsUnread) s"?$leaveAsUnreadFlagName=true" else ""}")
+    val logout: String                                       = getString("qns.url.logout",        s"https://quup.com/social/member/me/logoff/new")
   }
 
   object Login {
@@ -34,13 +41,13 @@ case class Conf(private val environment: Environment) {
     val interval: FiniteDuration = getFiniteDuration("qns.notifications.interval", FiniteDuration(30, TimeUnit.SECONDS))
   }
 
-  object GCM {
-    val url: String                 = "https://android.googleapis.com/gcm/send"
+  object FCM {
+    val url: String                 = "https://fcm.googleapis.com/fcm/send"
     val authorizationHeader: String = "Authorization"
     val authorizationKey: String    = "key"
-    val registrationIdsKey: String  = "registration_ids"
+    val toKey: String               = "to"
     val collapseKey: String         = "collapse_key"
     val dataKey: String             = "data"
-    val apiKey: String              = getString("qns.gcm.apiKey", "")
+    val apiKey: String              = getString("qns.fcm.apiKey", "")
   }
 }

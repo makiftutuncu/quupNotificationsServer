@@ -1,18 +1,26 @@
 package com.mehmetakiftutuncu.quupnotifications.utilities
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.mehmetakiftutuncu.quupnotifications.models.Maybe.Maybe
 import com.mehmetakiftutuncu.quupnotifications.models.{Maybe, Notification, Registration}
 import play.api.http.{ContentTypes, HeaderNames, Status}
 import play.api.libs.json.JsValue
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
+import play.api.mvc.Results.EmptyContent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
-case class QuupClient(private val conf: Conf,
-                      private val wsClient: WSClient) extends Loggable {
+@Singleton
+case class QuupClient @Inject() (conf: ConfBase, wsClient: WSClient) extends QuupClientBase
+
+@ImplementedBy(classOf[QuupClient])
+trait QuupClientBase extends Loggable {
+  protected val conf: ConfBase
+  protected val wsClient: WSClient
+
   def login(username: String, password: String): Future[Maybe[String]] = {
     val body: Map[String, Seq[String]] = Map(
       conf.Login.usernameKey -> Seq(username),
@@ -105,7 +113,7 @@ case class QuupClient(private val conf: Conf,
 
     Log.debug(s"""Logging registration id "${registration.registrationId}" out...""")
 
-    request.get().map {
+    request.post(EmptyContent()).map {
       wsResponse: WSResponse =>
         val status: Int = wsResponse.status
 
