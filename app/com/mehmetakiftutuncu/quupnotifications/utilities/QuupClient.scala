@@ -58,9 +58,10 @@ trait QuupClientBase extends Loggable {
   }
 
   def getNotifications(registration: Registration): Future[Maybe[List[Notification]]] = {
-    val request: WSRequest = wsClient.url(conf.Url.notifications())
+    val request: WSRequest = wsClient.url(conf.Url.notifications)
                                      .withRequestTimeout(conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
+                                     .withQueryString(conf.Url.leaveAsUnreadFlagName -> "true")
                                      .withHeaders(HeaderNames.COOKIE -> registration.toCookie(conf), HeaderNames.ACCEPT -> ContentTypes.JSON)
 
     Log.debug(s"""Getting notifications for registration id "${registration.registrationId}"...""")

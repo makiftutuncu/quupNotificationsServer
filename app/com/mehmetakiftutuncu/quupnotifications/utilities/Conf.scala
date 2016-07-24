@@ -24,11 +24,11 @@ trait ConfBase {
   }
 
   object Url {
-    private val leaveAsUnreadFlagName: String = getString("qns.url.leaveAsUnreadFlagName", "notUnRead")
+    val leaveAsUnreadFlagName: String = getString("qns.url.leaveAsUnreadFlagName", "notUnRead")
 
-    val login: String                                        = getString("qns.url.login",         s"https://quup.com/member/logon")
-    def notifications(leaveAsUnread: Boolean = true): String = getString("qns.url.notifications", s"https://quup.com/social/notification${if (leaveAsUnread) s"?$leaveAsUnreadFlagName=true" else ""}")
-    val logout: String                                       = getString("qns.url.logout",        s"https://quup.com/social/member/me/logoff/new")
+    val login: String         = getString("qns.url.login",         "https://quup.com/member/logon")
+    val notifications: String = getString("qns.url.notifications", "https://quup.com/social/notification")
+    val logout: String        = getString("qns.url.logout",      "https://quup.com/social/member/me/logoff/new")
   }
 
   object Login {

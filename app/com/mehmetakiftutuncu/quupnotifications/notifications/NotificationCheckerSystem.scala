@@ -1,14 +1,13 @@
 package com.mehmetakiftutuncu.quupnotifications.notifications
 
 import akka.actor.{ActorRef, ActorSystem, Cancellable, Props}
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.google.inject.{ImplementedBy, Inject}
 import com.mehmetakiftutuncu.quupnotifications.notifications.NotificationCheckerActor.CheckNotifications
 import com.mehmetakiftutuncu.quupnotifications.utilities._
 import play.api.inject.ApplicationLifecycle
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-@Singleton
 case class NotificationCheckerSystem @Inject() (applicationLifecycle: ApplicationLifecycle,
                                                 conf: ConfBase,
                                                 database: Database,
