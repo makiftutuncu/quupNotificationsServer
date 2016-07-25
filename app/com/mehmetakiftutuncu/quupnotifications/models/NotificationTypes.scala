@@ -6,7 +6,7 @@ import com.mehmetakiftutuncu.quupnotifications.utilities.{Log, Loggable}
 
 import scala.util.matching.Regex
 
-object NotificationTypes extends Loggable  {
+object NotificationTypes extends Loggable {
   sealed trait NotificationType {val regex: Regex}
 
   case object QuupLike    extends NotificationType {override val regex: Regex = """.+gönderini.+beğendi.*""".r}

@@ -28,7 +28,7 @@ trait ConfBase {
 
     val login: String         = getString("qns.url.login",         "https://quup.com/member/logon")
     val notifications: String = getString("qns.url.notifications", "https://quup.com/social/notification")
-    val logout: String        = getString("qns.url.logout",      "https://quup.com/social/member/me/logoff/new")
+    val logout: String        = getString("qns.url.logout",        "https://quup.com/social/member/me/logoff/new")
   }
 
   object Login {
@@ -39,6 +39,11 @@ trait ConfBase {
 
   object Notifications {
     val interval: FiniteDuration = getFiniteDuration("qns.notifications.interval", FiniteDuration(30, TimeUnit.SECONDS))
+  }
+
+  object Heartbeat {
+    val host: String             = getString("qns.heartbeat.host", "https://quupnotifications.herokuapp.com")
+    val interval: FiniteDuration = getFiniteDuration("qns.heartbeat.interval", FiniteDuration(5, TimeUnit.MINUTES))
   }
 
   object FCM {
