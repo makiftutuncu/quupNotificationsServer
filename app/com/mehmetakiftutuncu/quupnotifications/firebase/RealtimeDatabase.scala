@@ -50,30 +50,17 @@ trait RealtimeDatabaseBase {
     promise.future
   }
 
-  def getAll[R](path: String)(implicit manifest: Manifest[R]): Future[Maybe[List[R]]] = {
-    val promise: Promise[Maybe[List[R]]] = Promise[Maybe[List[R]]]()
+  def getChildrenKeys(path: String): Future[Maybe[List[String]]] = {
+    val promise: Promise[Maybe[List[String]]] = Promise[Maybe[List[String]]]()
 
     firebaseDatabase.getReference(path).addListenerForSingleValueEvent(new ValueEventListener {
       override def onDataChange(dataSnapshot: DataSnapshot): Unit = {
-        val result: Maybe[List[R]] = if (!dataSnapshot.exists()) {
+        val result: Maybe[List[String]] = if (!dataSnapshot.exists()) {
           Maybe(Errors(CommonError.notFound.data(path)))
         } else {
-          val dataSnapshots: List[DataSnapshot] = JavaConversions.asScalaIterator(dataSnapshot.getChildren.iterator()).toList
+          val keys: List[String] = JavaConversions.asScalaIterator(dataSnapshot.getChildren.iterator()).toList.map(_.getKey)
 
-          dataSnapshots.foldLeft(Maybe[List[R]](Errors.empty)) {
-            case (currentResult: Maybe[List[R]], dataSnapshot: DataSnapshot) =>
-              if (currentResult.maybeErrors.getOrElse(Errors.empty).hasErrors) {
-                currentResult
-              } else {
-                val maybeValue: Maybe[R] = getValueFromDataSnapshot[R](s"$path/${dataSnapshot.getKey}", dataSnapshot)
-
-                if (maybeValue.hasErrors) {
-                  Maybe(maybeValue.errors)
-                } else {
-                  Maybe(currentResult.maybeValue.getOrElse(List.empty[R]) :+ maybeValue.value)
-                }
-              }
-          }
+          Maybe(keys)
         }
 
         promise.success(result)

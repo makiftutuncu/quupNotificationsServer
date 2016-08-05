@@ -32,6 +32,8 @@ trait RegistrationsBase extends Loggable {
           val errors: Errors = maybeSessionId.maybeErrors.getOrElse(Errors.empty) ++ maybeLastNotification.maybeErrors.getOrElse(Errors.empty)
 
           if (errors.hasErrors) {
+            Log.error(s"""Failed to get Registration for registration id "$registrationId"!""", errors)
+
             Maybe[Registration](errors)
           } else {
             val registration: Registration = Registration(registrationId, maybeSessionId.value, maybeLastNotification.value)
@@ -63,12 +65,16 @@ trait RegistrationsBase extends Loggable {
     try {
       Log.debug(s"""Getting registrations...""")
 
-      val futureMaybeRegistrationIds: Future[Maybe[List[String]]] = RealtimeDatabase.getAll[String]("registrations")
+      val futureMaybeRegistrationIds: Future[Maybe[List[String]]] = RealtimeDatabase.getChildrenKeys("registrations")
 
       futureMaybeRegistrationIds.flatMap {
         maybeRegistrationIds: Maybe[List[String]] =>
           if (maybeRegistrationIds.hasErrors) {
-            Future.successful(Maybe[List[Registration]](maybeRegistrationIds.errors))
+            val errors: Errors = maybeRegistrationIds.errors
+
+            Log.error("""Failed to get registrations!""", errors)
+
+            Future.successful(Maybe[List[Registration]](errors))
           } else {
             val futureMaybeRegistrationList: List[Future[Maybe[Registration]]] = maybeRegistrationIds.value.map(get)
 
