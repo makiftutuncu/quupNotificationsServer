@@ -1,7 +1,6 @@
 package com.mehmetakiftutuncu.quupnotifications.models
 
-import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
-import com.mehmetakiftutuncu.quupnotifications.models.Maybe.{Maybe, _}
+import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.mehmetakiftutuncu.quupnotifications.models.NotificationTypes.NotificationType
 import com.mehmetakiftutuncu.quupnotifications.utilities.{Log, Loggable}
 import play.api.libs.json.{JsArray, JsObject, JsValue, Json}

@@ -24,7 +24,7 @@ object Log {
   }
 
   private def messageWithErrors(message: => String, errors: Errors)(implicit loggable: Loggable): String = {
-    s"${messageWithTag(message)} Errors: ${errors.represent(JsonErrorRepresenter)}"
+    s"${messageWithTag(message)} Errors: ${errors.represent(JsonErrorRepresenter, includeWhen = false)}"
   }
 }
 

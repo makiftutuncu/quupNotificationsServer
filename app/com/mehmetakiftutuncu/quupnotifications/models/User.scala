@@ -1,7 +1,6 @@
 package com.mehmetakiftutuncu.quupnotifications.models
 
-import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
-import com.mehmetakiftutuncu.quupnotifications.models.Maybe.Maybe
+import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.mehmetakiftutuncu.quupnotifications.utilities.{Log, Loggable}
 import play.api.libs.json.{JsObject, JsValue, Json}
 
@@ -81,7 +80,7 @@ object User extends Loggable {
       }
     } catch {
       case t: Throwable =>
-        val errors: Errors = Errors(CommonError.invalidData.data(json.toString()))
+        val errors: Errors = Errors(CommonError.invalidData.reason(t.getMessage).data(json.toString()))
         Log.error("Failed to parse User with exception!", errors, t)
 
         Maybe(errors)

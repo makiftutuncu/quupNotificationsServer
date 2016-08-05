@@ -10,16 +10,17 @@ import play.api.libs.ws.{WSClient, WSResponse}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
-case class HeartbeatActor @Inject() (conf: ConfBase, wsClient: WSClient) extends HeartbeatActorBase
+case class HeartbeatActor @Inject()(Conf: ConfBase,
+                                    WSClient: WSClient) extends HeartbeatActorBase
 
 @ImplementedBy(classOf[HeartbeatActor])
 trait HeartbeatActorBase extends Actor with Loggable {
-  protected val conf: ConfBase
-  protected val wsClient: WSClient
+  protected val Conf: ConfBase
+  protected val WSClient: WSClient
 
   override def receive: Receive = {
     case Beep =>
-      wsClient.url(conf.Heartbeat.host).withRequestTimeout(conf.Common.wsTimeout).get().map {
+      WSClient.url(Conf.Heartbeat.host).withRequestTimeout(Conf.Common.wsTimeout).get().map {
         wsResponse: WSResponse =>
           Log.debug("I am still alive!")
       }

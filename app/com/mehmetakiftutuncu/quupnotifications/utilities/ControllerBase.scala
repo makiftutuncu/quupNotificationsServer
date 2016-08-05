@@ -1,8 +1,6 @@
 package com.mehmetakiftutuncu.quupnotifications.utilities
 
-import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
-import com.mehmetakiftutuncu.quupnotifications.models.Maybe
-import com.mehmetakiftutuncu.quupnotifications.models.Maybe._
+import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import play.api.http.ContentTypes
 import play.api.libs.json.{JsValue, Reads}
 import play.api.mvc.{Controller, Request, Result}
@@ -38,7 +36,7 @@ trait ControllerBase extends Controller with Loggable {
   }
 
   protected def failWithErrors(errors: Errors): Result = {
-    BadRequest(errors.represent(JsonErrorRepresenter)).as(ContentTypes.JSON)
+    BadRequest(errors.represent(JsonErrorRepresenter, includeWhen = true)).as(ContentTypes.JSON)
   }
 
   protected def failWithErrors(message: => String, errors: Errors): Result = {

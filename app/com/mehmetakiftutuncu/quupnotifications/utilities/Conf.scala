@@ -8,13 +8,13 @@ import play.api.{Configuration, Environment}
 import scala.concurrent.duration.FiniteDuration
 
 @Singleton
-case class Conf @Inject() (environment: Environment) extends ConfBase
+case class Conf @Inject()(Environment: Environment) extends ConfBase
 
 @ImplementedBy(classOf[Conf])
 trait ConfBase {
-  protected val environment: Environment
+  protected val Environment: Environment
 
-  private lazy val conf: Configuration = Configuration.load(environment)
+  private lazy val conf: Configuration = Configuration.load(Environment)
 
   def getFiniteDuration(key: String, defaultValue: FiniteDuration): FiniteDuration = conf.getMilliseconds(key).map(FiniteDuration(_, TimeUnit.MILLISECONDS)).getOrElse(defaultValue)
   def getString(key: String, defaultValue: String): String                         = conf.getString(key).getOrElse(defaultValue)
@@ -46,13 +46,18 @@ trait ConfBase {
     val interval: FiniteDuration = getFiniteDuration("qns.heartbeat.interval", FiniteDuration(5, TimeUnit.MINUTES))
   }
 
-  object FCM {
+  object CloudMessagingClient {
     val url: String                 = "https://fcm.googleapis.com/fcm/send"
     val authorizationHeader: String = "Authorization"
     val authorizationKey: String    = "key"
     val toKey: String               = "to"
     val collapseKey: String         = "collapse_key"
     val dataKey: String             = "data"
-    val apiKey: String              = getString("qns.fcm.apiKey", "")
+    val apiKey: String              = getString("qns.cloudMessagingClient.apiKey", "")
+  }
+
+  object RealtimeDatabase {
+    val credentialsFilePath: String = getString("qns.realtimeDatabase.credentialsFilePath", "conf/credentials.json")
+    val databaseName: String        = getString("qns.realtimeDatabase.databaseName",        "quup-notifications")
   }
 }

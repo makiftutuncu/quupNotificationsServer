@@ -1,9 +1,8 @@
 package com.mehmetakiftutuncu.quupnotifications.utilities
 
-import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
+import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import com.mehmetakiftutuncu.quupnotifications.models.Maybe.Maybe
-import com.mehmetakiftutuncu.quupnotifications.models.{Maybe, Notification, Registration}
+import com.mehmetakiftutuncu.quupnotifications.models.{Notification, Registration}
 import play.api.http.{ContentTypes, HeaderNames, Status}
 import play.api.libs.json.JsValue
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
@@ -14,21 +13,22 @@ import scala.concurrent.Future
 import scala.util.Try
 
 @Singleton
-case class QuupClient @Inject() (conf: ConfBase, wsClient: WSClient) extends QuupClientBase
+case class QuupClient @Inject()(Conf: ConfBase,
+                                WSClient: WSClient) extends QuupClientBase
 
 @ImplementedBy(classOf[QuupClient])
 trait QuupClientBase extends Loggable {
-  protected val conf: ConfBase
-  protected val wsClient: WSClient
+  protected val Conf: ConfBase
+  protected val WSClient: WSClient
 
   def login(username: String, password: String): Future[Maybe[String]] = {
     val body: Map[String, Seq[String]] = Map(
-      conf.Login.usernameKey -> Seq(username),
-      conf.Login.passwordKey -> Seq(password)
+      Conf.Login.usernameKey -> Seq(username),
+      Conf.Login.passwordKey -> Seq(password)
     )
 
-    val request: WSRequest = wsClient.url(conf.Url.login)
-                                     .withRequestTimeout(conf.Common.wsTimeout)
+    val request: WSRequest = WSClient.url(Conf.Url.login)
+                                     .withRequestTimeout(Conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
                                      .withBody(body)
 
@@ -45,11 +45,11 @@ trait QuupClientBase extends Loggable {
 
           Maybe(errors)
         } else {
-          Registration.getSessionIdFrom(conf, wsResponse)
+          Registration.getSessionIdFrom(Conf, wsResponse)
         }
     }.recover {
       case t: Throwable =>
-        val errors: Errors = Errors(CommonError.requestFailed)
+        val errors: Errors = Errors(CommonError.requestFailed.reason(t.getMessage))
 
         Log.error("Login Future failed!", errors, t)
 
@@ -58,11 +58,11 @@ trait QuupClientBase extends Loggable {
   }
 
   def getNotifications(registration: Registration): Future[Maybe[List[Notification]]] = {
-    val request: WSRequest = wsClient.url(conf.Url.notifications)
-                                     .withRequestTimeout(conf.Common.wsTimeout)
+    val request: WSRequest = WSClient.url(Conf.Url.notifications)
+                                     .withRequestTimeout(Conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
-                                     .withQueryString(conf.Url.leaveAsUnreadFlagName -> "true")
-                                     .withHeaders(HeaderNames.COOKIE -> registration.toCookie(conf), HeaderNames.ACCEPT -> ContentTypes.JSON)
+                                     .withQueryString(Conf.Url.leaveAsUnreadFlagName -> "true")
+                                     .withHeaders(HeaderNames.COOKIE -> registration.toCookie(Conf), HeaderNames.ACCEPT -> ContentTypes.JSON)
 
     Log.debug(s"""Getting notifications for registration id "${registration.registrationId}"...""")
 
@@ -98,7 +98,7 @@ trait QuupClientBase extends Loggable {
         }
     }.recover {
       case t: Throwable =>
-        val errors: Errors = Errors(CommonError.requestFailed)
+        val errors: Errors = Errors(CommonError.requestFailed.reason(t.getMessage))
 
         Log.error("Getting notifications Future failed!", errors, t)
 
@@ -107,10 +107,10 @@ trait QuupClientBase extends Loggable {
   }
 
   def logout(registration: Registration): Future[Errors] = {
-    val request: WSRequest = wsClient.url(conf.Url.logout)
-                                     .withRequestTimeout(conf.Common.wsTimeout)
+    val request: WSRequest = WSClient.url(Conf.Url.logout)
+                                     .withRequestTimeout(Conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
-                                     .withHeaders(HeaderNames.COOKIE -> registration.toCookie(conf))
+                                     .withHeaders(HeaderNames.COOKIE -> registration.toCookie(Conf))
 
     Log.debug(s"""Logging registration id "${registration.registrationId}" out...""")
 
@@ -129,7 +129,7 @@ trait QuupClientBase extends Loggable {
         }
     }.recover {
       case t: Throwable =>
-        val errors: Errors = Errors(CommonError.requestFailed)
+        val errors: Errors = Errors(CommonError.requestFailed.reason(t.getMessage))
 
         Log.error("Logout Future failed!", errors, t)
 

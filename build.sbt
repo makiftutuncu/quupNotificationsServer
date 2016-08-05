@@ -1,6 +1,6 @@
 name := """quupNotificationsServer"""
 
-version := "2.0"
+version := "2.1"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -12,9 +12,9 @@ libraryDependencies ++= Seq(
   ws,
   evolutions,
   "com.typesafe.play" %% "anorm" % "2.5.0",
-  "mysql" % "mysql-connector-java" % "5.1.36",
   "com.typesafe.akka" %% "akka-actor" % "2.4.8",
-  "com.github.mehmetakiftutuncu" %% "errors" % "1.0",
+  "com.github.mehmetakiftutuncu" %% "errors" % "1.1",
+  "com.google.firebase" % "firebase-server-sdk" % "[3.0.0,)",
   "org.specs2" %% "specs2-core" % "3.8.4" % Test,
   "org.specs2" %% "specs2-junit" % "3.8.4" % Test
 )

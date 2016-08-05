@@ -1,8 +1,9 @@
-package com.mehmetakiftutuncu.quupnotifications.utilities
+package com.mehmetakiftutuncu.quupnotifications.firebase
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.mehmetakiftutuncu.quupnotifications.models.{Notification, Registration}
+import com.mehmetakiftutuncu.quupnotifications.utilities._
 import play.api.http.{ContentTypes, Status}
 import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
@@ -11,25 +12,25 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Singleton
-case class FCMClient @Inject()(conf: ConfBase,
-                               database: Database,
-                               wsClient: WSClient) extends FCMClientBase
+case class CloudMessagingClient @Inject()(Conf: ConfBase,
+                                          Registrations: RegistrationsBase,
+                                          WSClient: WSClient) extends CloudMessagingClientBase
 
-@ImplementedBy(classOf[FCMClient])
-trait FCMClientBase extends Loggable {
-  protected val conf: ConfBase
-  protected val database: Database
-  protected val wsClient: WSClient
+@ImplementedBy(classOf[CloudMessagingClient])
+trait CloudMessagingClientBase extends Loggable {
+  protected val Conf: ConfBase
+  protected val Registrations: RegistrationsBase
+  protected val WSClient: WSClient
 
   def push(registration: Registration, notifications: List[Notification]): Future[Errors] = {
-    val request: WSRequest = wsClient.url(conf.FCM.url)
-                                     .withRequestTimeout(conf.Common.wsTimeout)
-                                     .withHeaders(conf.FCM.authorizationHeader -> s"${conf.FCM.authorizationKey}=${conf.FCM.apiKey}")
+    val request: WSRequest = WSClient.url(Conf.CloudMessagingClient.url)
+                                     .withRequestTimeout(Conf.Common.wsTimeout)
+                                     .withHeaders(Conf.CloudMessagingClient.authorizationHeader -> s"${Conf.CloudMessagingClient.authorizationKey}=${Conf.CloudMessagingClient.apiKey}")
 
     val data: JsObject = Json.obj(
-      conf.FCM.toKey       -> registration.registrationId,
-      conf.FCM.collapseKey -> registration.registrationId,
-      conf.FCM.dataKey     -> Json.obj("notifications" -> notifications.map(_.toJson))
+      Conf.CloudMessagingClient.toKey       -> registration.registrationId,
+      Conf.CloudMessagingClient.collapseKey -> registration.registrationId,
+      Conf.CloudMessagingClient.dataKey     -> Json.obj("notifications" -> notifications.map(_.toJson))
     )
 
     Log.debug(s"""Pushing "${notifications.size}" notifications to registration id "${registration.registrationId}"...""")
@@ -63,7 +64,7 @@ trait FCMClientBase extends Loggable {
 
             (json \ "results").asOpt[JsArray].flatMap(_.value.headOption).flatMap(r => (r \ "error").asOpt[String]).foreach {
               case reason: String if reason == "NotRegistered" || reason == "InvalidRegistration" =>
-                Registration.deleteRegistration(database, registration)
+                Registrations.delete(registration)
 
               case _ =>
             }
@@ -77,7 +78,7 @@ trait FCMClientBase extends Loggable {
         }
     }.recover {
       case t: Throwable =>
-        val errors: Errors = Errors(CommonError.requestFailed)
+        val errors: Errors = Errors(CommonError.requestFailed.reason(t.getMessage))
 
         Log.error(s"""Pushing "${notifications.size}" notifications to "${registration.registrationId}" failed!""", errors, t)
 

@@ -1,7 +1,6 @@
 package com.mehmetakiftutuncu.quupnotifications.models
 
-import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
-import com.mehmetakiftutuncu.quupnotifications.models.Maybe.Maybe
+import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.mehmetakiftutuncu.quupnotifications.utilities.{Log, Loggable}
 
 import scala.util.matching.Regex

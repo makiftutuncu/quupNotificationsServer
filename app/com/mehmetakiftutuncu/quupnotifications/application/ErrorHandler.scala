@@ -11,13 +11,13 @@ import play.api.{Configuration, Environment, OptionalSourceMapper, UsefulExcepti
 import scala.concurrent.Future
 
 @Singleton
-class ErrorHandler @Inject() (environment: Environment,
-                              config: Configuration,
-                              sourceMapper: OptionalSourceMapper,
-                              router: Provider[Router]) extends DefaultHttpErrorHandler(environment, config, sourceMapper, router) with ControllerBase with Loggable {
+class ErrorHandler @Inject()(Environment: Environment,
+                             Config: Configuration,
+                             SourceMapper: OptionalSourceMapper,
+                             Router: Provider[Router]) extends DefaultHttpErrorHandler(Environment, Config, SourceMapper, Router) with ControllerBase with Loggable {
 
   override protected def onProdServerError(request: RequestHeader, exception: UsefulException): Future[Result] = {
-    val errors: Errors = Errors(CommonError.requestFailed)
+    val errors: Errors = Errors(CommonError.requestFailed.reason(exception.getMessage))
 
     Log.error(s"""Request "$request" failed with exception!""", errors, exception)
 
