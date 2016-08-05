@@ -9,7 +9,7 @@ It is currently deployed to https://quupnotifications.herokuapp.com.
 
 Technical Details
 --------------
-quup Notifications Server application is developed using [Play Framework](https://www.playframework.com/) and [Scala](http://www.scala-lang.org/). There is a simple MySQL database provided by Heroku for persistence. The application utilizes [Akka](http://akka.io/) actors and [WS](https://www.playframework.com/documentation/latest/ScalaWS) and [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging) for pushing to devices.
+quup Notifications Server application is developed using [Play Framework](https://www.playframework.com/) and [Scala](http://www.scala-lang.org/). The application utilizes [Akka](http://akka.io/) actors for scheduling jobs, [WS](https://www.playframework.com/documentation/latest/ScalaWS) for making HTTP requests, [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging) for pushing notifications to client devices and [Firebase Realtime Database](https://firebase.google.com/docs/database/) for data persistance.
 
 Privacy
 --------------
