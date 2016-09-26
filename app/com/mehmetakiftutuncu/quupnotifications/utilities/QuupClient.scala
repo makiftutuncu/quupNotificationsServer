@@ -1,5 +1,7 @@
 package com.mehmetakiftutuncu.quupnotifications.utilities
 
+import java.net.ConnectException
+
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.mehmetakiftutuncu.quupnotifications.models.{Notification, Registration}
@@ -21,13 +23,13 @@ trait QuupClientBase extends Loggable {
   protected val Conf: ConfBase
   protected val WSClient: WSClient
 
-  def login(username: String, password: String): Future[Maybe[String]] = {
+  def login(username: String, password: String, useHttps: Boolean = true): Future[Maybe[String]] = {
     val body: Map[String, Seq[String]] = Map(
       Conf.Login.usernameKey -> Seq(username),
       Conf.Login.passwordKey -> Seq(password)
     )
 
-    val request: WSRequest = WSClient.url(Conf.Url.login)
+    val request: WSRequest = WSClient.url(Conf.Url.login(useHttps))
                                      .withRequestTimeout(Conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
                                      .withBody(body)
@@ -47,18 +49,21 @@ trait QuupClientBase extends Loggable {
         } else {
           Registration.getSessionIdFrom(Conf, wsResponse)
         }
-    }.recover {
+    }.recoverWith {
+      case e: ConnectException if e.getMessage.contains("SSL") =>
+        login(username, password, useHttps = false)
+
       case t: Throwable =>
         val errors: Errors = Errors(CommonError.requestFailed.reason(t.getMessage))
 
         Log.error("Login Future failed!", errors, t)
 
-        Maybe(errors)
+        Future.successful(Maybe(errors))
     }
   }
 
-  def getNotifications(registration: Registration): Future[Maybe[List[Notification]]] = {
-    val request: WSRequest = WSClient.url(Conf.Url.notifications)
+  def getNotifications(registration: Registration, useHttps: Boolean = true): Future[Maybe[List[Notification]]] = {
+    val request: WSRequest = WSClient.url(Conf.Url.notifications(useHttps))
                                      .withRequestTimeout(Conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
                                      .withQueryString(Conf.Url.leaveAsUnreadFlagName -> "true")
@@ -96,18 +101,21 @@ trait QuupClientBase extends Loggable {
             Notification.getNotificationList(maybeNotificationsJson.get)
           }
         }
-    }.recover {
+    }.recoverWith {
+      case e: ConnectException if e.getMessage.contains("SSL") =>
+        getNotifications(registration, useHttps = false)
+
       case t: Throwable =>
         val errors: Errors = Errors(CommonError.requestFailed.reason(t.getMessage))
 
         Log.error("Getting notifications Future failed!", errors, t)
 
-        Maybe(errors)
+        Future.successful(Maybe(errors))
     }
   }
 
-  def logout(registration: Registration): Future[Errors] = {
-    val request: WSRequest = WSClient.url(Conf.Url.logout)
+  def logout(registration: Registration, useHttps: Boolean = true): Future[Errors] = {
+    val request: WSRequest = WSClient.url(Conf.Url.logout(useHttps))
                                      .withRequestTimeout(Conf.Common.wsTimeout)
                                      .withFollowRedirects(follow = false)
                                      .withHeaders(HeaderNames.COOKIE -> registration.toCookie(Conf))
@@ -127,13 +135,16 @@ trait QuupClientBase extends Loggable {
         } else {
           Errors.empty
         }
-    }.recover {
+    }.recoverWith {
+      case e: ConnectException if e.getMessage.contains("SSL") =>
+        logout(registration, useHttps = false)
+
       case t: Throwable =>
         val errors: Errors = Errors(CommonError.requestFailed.reason(t.getMessage))
 
         Log.error("Logout Future failed!", errors, t)
 
-        errors
+        Future.successful(errors)
     }
   }
 }

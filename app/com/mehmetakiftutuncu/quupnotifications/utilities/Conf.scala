@@ -26,9 +26,9 @@ trait ConfBase {
   object Url {
     val leaveAsUnreadFlagName: String = getString("qns.url.leaveAsUnreadFlagName", "notUnRead")
 
-    val login: String         = getString("qns.url.login",         "https://quup.com/member/logon")
-    val notifications: String = getString("qns.url.notifications", "https://quup.com/social/notification")
-    val logout: String        = getString("qns.url.logout",        "https://quup.com/social/member/me/logoff/new")
+    def login(useHttps: Boolean = true): String         = getString("qns.url.login",         "https://quup.com/member/logon").replaceAll("https://", if (useHttps) "https://" else "http://")
+    def notifications(useHttps: Boolean = true): String = getString("qns.url.notifications", "https://quup.com/social/notification").replaceAll("https://", if (useHttps) "https://" else "http://")
+    def logout(useHttps: Boolean = true): String        = getString("qns.url.logout",        "https://quup.com/social/member/me/logoff/new").replaceAll("https://", if (useHttps) "https://" else "http://")
   }
 
   object Login {

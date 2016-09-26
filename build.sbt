@@ -1,6 +1,6 @@
 name := """quupNotificationsServer"""
 
-version := "2.1"
+version := "2.1.1"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 

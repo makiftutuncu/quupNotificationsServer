@@ -72,7 +72,9 @@ trait RegistrationsBase extends Loggable {
           if (maybeRegistrationIds.hasErrors) {
             val errors: Errors = maybeRegistrationIds.errors
 
-            Log.error("""Failed to get registrations!""", errors)
+            if (!errors.exists {case CommonError("notFound", _, "registrations") => true; case _ => false}) {
+              Log.error("""Failed to get registrations!""", errors)
+            }
 
             Future.successful(Maybe[List[Registration]](errors))
           } else {
