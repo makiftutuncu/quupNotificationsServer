@@ -5,8 +5,6 @@ Welcome to quup Notifications Server!
 
 This is a server application for regularly checking notifications on https://quup.com and pushing them to registered clients. There is an Android client implemented here https://github.com/mehmetakiftutuncu/quupNotificationsAndroid.
 
-It is currently deployed to https://quupnotifications.herokuapp.com.
-
 Technical Details
 --------------
 quup Notifications Server application is developed using [Play Framework](https://www.playframework.com/) and [Scala](http://www.scala-lang.org/). The application utilizes [Akka](http://akka.io/) actors for scheduling jobs, [WS](https://www.playframework.com/documentation/latest/ScalaWS) for making HTTP requests, [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging) for pushing notifications to client devices and [Firebase Realtime Database](https://firebase.google.com/docs/database/) for data persistance.
